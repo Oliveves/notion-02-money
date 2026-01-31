@@ -58,7 +58,7 @@ def update_block(token, block_id, news_item):
                 {
                     "type": "equation",
                     "equation": { 
-                        "expression": f"\\color{{gray}} \\textsf{{\\scriptsize 오늘의 뉴스 📊 \\color{{black}} {title}}}" 
+                        "expression": f"\\scriptsize \\color{{gray}} \\text{{오늘의 뉴스 📊 }} \\color{{black}} \\text{{{title}}}" 
                     }
                 }
             ]
