@@ -36,6 +36,7 @@ jobs:
     
     - name: Run Market Widget Script
       run: python generate_market_widget.py
+      continue-on-error: true
 
     - name: Run Monthly Log Script
       env:
