@@ -19,6 +19,10 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
+        
+    - name: Install Dependencies
+      run: |
+        pip install yfinance
 
     - name: Run Calendar Widget Script
       env:
@@ -29,6 +33,9 @@ jobs:
       env:
         NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
       run: python generate_asset_chart.py
+    
+    - name: Run Market Widget Script
+      run: python generate_market_widget.py
       
     - name: Run Key Message Script (Optional)
       env:
