@@ -1,0 +1,21 @@
+{
+    "children": [
+        {
+            "object": "block",
+            "type": "paragraph",
+            "paragraph": {
+                "rich_text": [
+                    {
+                        "type": "mention",
+                        "mention": {
+                            "type": "database",
+                            "database": {
+                                "id": "2f90d907-031e-805c-be36-ebd342683bfa"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

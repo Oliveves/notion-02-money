@@ -1,0 +1,12 @@
+{
+    "children": [
+        {
+            "object": "block",
+            "type": "link_to_page",
+            "link_to_page": {
+                "type": "database_id",
+                "database_id": "2f90d907-031e-805c-be36-ebd342683bfa"
+            }
+        }
+    ]
+}

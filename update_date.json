@@ -1,0 +1,12 @@
+{
+    "paragraph": {
+        "rich_text": [
+            {
+                "type": "equation",
+                "equation": {
+                    "expression": "\\texttt{\\small 2026} \\texttt{\\tiny \\ 년} \\quad \\texttt{\\huge 1} \\texttt{\\tiny \\ 월} \\quad \\texttt{\\huge 31} \\texttt{\\tiny \\ 일} \\quad\\texttt{\\large Saturday}"
+                }
+            }
+        ]
+    }
+}

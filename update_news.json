@@ -1,0 +1,12 @@
+{
+    "paragraph": {
+        "rich_text": [
+            {
+                "type": "equation",
+                "equation": {
+                    "expression": "\\color{gray} \\textsf{\\scriptsize 오늘의 뉴스 📊 \\color{black} 삼성전기, 엔비디아 공급망 뚫었다} \\color{black}"
+                }
+            }
+        ]
+    }
+}

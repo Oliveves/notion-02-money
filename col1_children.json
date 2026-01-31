@@ -1,0 +1,210 @@
+﻿{
+    "object":  "list",
+    "results":  [
+                    {
+                        "object":  "block",
+                        "id":  "2f90d907-031e-8088-8674-dd5db4e351b0",
+                        "parent":  {
+                                       "type":  "block_id",
+                                       "block_id":  "2f90d907-031e-80da-b0de-e8769861b74f"
+                                   },
+                        "created_time":  "2026-01-31T11:33:00.000Z",
+                        "last_edited_time":  "2026-01-31T11:39:00.000Z",
+                        "created_by":  {
+                                           "object":  "user",
+                                           "id":  "b8be8172-bfb2-4063-81d2-223ab5eb8700"
+                                       },
+                        "last_edited_by":  {
+                                               "object":  "user",
+                                               "id":  "b8be8172-bfb2-4063-81d2-223ab5eb8700"
+                                           },
+                        "has_children":  false,
+                        "archived":  false,
+                        "in_trash":  false,
+                        "type":  "paragraph",
+                        "paragraph":  {
+                                          "rich_text":  [
+                                                            {
+                                                                "type":  "text",
+                                                                "text":  {
+                                                                             "content":  " ",
+                                                                             "link":  null
+                                                                         },
+                                                                "annotations":  {
+                                                                                    "bold":  false,
+                                                                                    "italic":  false,
+                                                                                    "strikethrough":  false,
+                                                                                    "underline":  false,
+                                                                                    "code":  false,
+                                                                                    "color":  "default"
+                                                                                },
+                                                                "plain_text":  " ",
+                                                                "href":  null
+                                                            },
+                                                            {
+                                                                "type":  "equation",
+                                                                "equation":  {
+                                                                                 "expression":  "\\fcolorbox{gray}{white}{\\hspace{35pt} \\texttt{Trading Journal} \\hspace{35pt}}"
+                                                                             },
+                                                                "annotations":  {
+                                                                                    "bold":  false,
+                                                                                    "italic":  false,
+                                                                                    "strikethrough":  false,
+                                                                                    "underline":  false,
+                                                                                    "code":  false,
+                                                                                    "color":  "default"
+                                                                                },
+                                                                "plain_text":  "\\fcolorbox{gray}{white}{\\hspace{35pt} \\texttt{Trading Journal} \\hspace{35pt}}",
+                                                                "href":  null
+                                                            }
+                                                        ],
+                                          "color":  "default"
+                                      }
+                    },
+                    {
+                        "object":  "block",
+                        "id":  "2f90d907-031e-805c-be36-ebd342683bfa",
+                        "parent":  {
+                                       "type":  "block_id",
+                                       "block_id":  "2f90d907-031e-80da-b0de-e8769861b74f"
+                                   },
+                        "created_time":  "2026-01-31T11:34:00.000Z",
+                        "last_edited_time":  "2026-01-31T12:15:00.000Z",
+                        "created_by":  {
+                                           "object":  "user",
+                                           "id":  "b8be8172-bfb2-4063-81d2-223ab5eb8700"
+                                       },
+                        "last_edited_by":  {
+                                               "object":  "user",
+                                               "id":  "b8be8172-bfb2-4063-81d2-223ab5eb8700"
+                                           },
+                        "has_children":  false,
+                        "archived":  false,
+                        "in_trash":  false,
+                        "type":  "child_database",
+                        "child_database":  {
+                                               "title":  "Trading Journal"
+                                           }
+                    },
+                    {
+                        "object":  "block",
+                        "id":  "2f90d907-031e-8024-8845-e1e8d62d9807",
+                        "parent":  {
+                                       "type":  "block_id",
+                                       "block_id":  "2f90d907-031e-80da-b0de-e8769861b74f"
+                                   },
+                        "created_time":  "2026-01-31T11:40:00.000Z",
+                        "last_edited_time":  "2026-01-31T11:42:00.000Z",
+                        "created_by":  {
+                                           "object":  "user",
+                                           "id":  "b8be8172-bfb2-4063-81d2-223ab5eb8700"
+                                       },
+                        "last_edited_by":  {
+                                               "object":  "user",
+                                               "id":  "b8be8172-bfb2-4063-81d2-223ab5eb8700"
+                                           },
+                        "has_children":  false,
+                        "archived":  false,
+                        "in_trash":  false,
+                        "type":  "paragraph",
+                        "paragraph":  {
+                                          "rich_text":  [
+
+                                                        ],
+                                          "color":  "default"
+                                      }
+                    },
+                    {
+                        "object":  "block",
+                        "id":  "2f90d907-031e-808d-8f7f-fe3b6c62faf9",
+                        "parent":  {
+                                       "type":  "block_id",
+                                       "block_id":  "2f90d907-031e-80da-b0de-e8769861b74f"
+                                   },
+                        "created_time":  "2026-01-31T11:40:00.000Z",
+                        "last_edited_time":  "2026-01-31T11:44:00.000Z",
+                        "created_by":  {
+                                           "object":  "user",
+                                           "id":  "b8be8172-bfb2-4063-81d2-223ab5eb8700"
+                                       },
+                        "last_edited_by":  {
+                                               "object":  "user",
+                                               "id":  "b8be8172-bfb2-4063-81d2-223ab5eb8700"
+                                           },
+                        "has_children":  false,
+                        "archived":  false,
+                        "in_trash":  false,
+                        "type":  "paragraph",
+                        "paragraph":  {
+                                          "rich_text":  [
+                                                            {
+                                                                "type":  "text",
+                                                                "text":  {
+                                                                             "content":  " ",
+                                                                             "link":  null
+                                                                         },
+                                                                "annotations":  {
+                                                                                    "bold":  false,
+                                                                                    "italic":  false,
+                                                                                    "strikethrough":  false,
+                                                                                    "underline":  false,
+                                                                                    "code":  false,
+                                                                                    "color":  "default"
+                                                                                },
+                                                                "plain_text":  " ",
+                                                                "href":  null
+                                                            },
+                                                            {
+                                                                "type":  "equation",
+                                                                "equation":  {
+                                                                                 "expression":  "\\fcolorbox{gray}{white}{\\hspace{45pt} \\texttt{Trading Study} \\hspace{45pt}}"
+                                                                             },
+                                                                "annotations":  {
+                                                                                    "bold":  false,
+                                                                                    "italic":  false,
+                                                                                    "strikethrough":  false,
+                                                                                    "underline":  false,
+                                                                                    "code":  false,
+                                                                                    "color":  "default"
+                                                                                },
+                                                                "plain_text":  "\\fcolorbox{gray}{white}{\\hspace{45pt} \\texttt{Trading Study} \\hspace{45pt}}",
+                                                                "href":  null
+                                                            }
+                                                        ],
+                                          "color":  "default"
+                                      }
+                    },
+                    {
+                        "object":  "block",
+                        "id":  "2f90d907-031e-80b3-8a69-d2389e8197a5",
+                        "parent":  {
+                                       "type":  "block_id",
+                                       "block_id":  "2f90d907-031e-80da-b0de-e8769861b74f"
+                                   },
+                        "created_time":  "2026-01-31T11:42:00.000Z",
+                        "last_edited_time":  "2026-01-31T11:59:00.000Z",
+                        "created_by":  {
+                                           "object":  "user",
+                                           "id":  "b8be8172-bfb2-4063-81d2-223ab5eb8700"
+                                       },
+                        "last_edited_by":  {
+                                               "object":  "user",
+                                               "id":  "b8be8172-bfb2-4063-81d2-223ab5eb8700"
+                                           },
+                        "has_children":  false,
+                        "archived":  false,
+                        "in_trash":  false,
+                        "type":  "child_database",
+                        "child_database":  {
+                                               "title":  "Trading Study"
+                                           }
+                    }
+                ],
+    "next_cursor":  null,
+    "has_more":  false,
+    "type":  "block",
+    "block":  {
+
+              },
+    "request_id":  "dad12fc6-919e-43f6-8f3c-1142e5a0eb26"
+}
