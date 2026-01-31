@@ -57,15 +57,9 @@ def update_block(token, block_id, news_item):
             "rich_text": [
                 {
                     "type": "equation",
-                    "equation": { "expression": "\\color{gray} \\textsf{\\scriptsize 오늘의 뉴스 📊 }" }
-                },
-                {
-                    "type": "text",
-                    "text": { 
-                        "content": " " + title,
-                        "link": { "url": link }
-                    },
-                    "annotations": { "color": "default" }
+                    "equation": { 
+                        "expression": f"\\color{{gray}} \\textsf{{\\scriptsize 오늘의 뉴스 📊 \\color{{black}} {title}}}" 
+                    }
                 }
             ]
         }
