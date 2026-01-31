@@ -120,14 +120,17 @@ def generate_html(market_data):
         if change_val > 0:
             color_class = "up"
             sign = "+"
+            icon = "▲"
         elif change_val < 0:
             color_class = "down"
             sign = "" # Negative number already has minus
+            icon = "▼"
         else:
             color_class = "flat"
             sign = ""
+            icon = "-"
             
-        change_fmt = f"{sign}{change_val:,.2f} ({sign}{pct_val:.2f}%)"
+        change_fmt = f"{icon} {sign}{change_val:,.2f} ({sign}{pct_val:.2f}%)"
         
         items_html += f"""
         <div class="market-item">
