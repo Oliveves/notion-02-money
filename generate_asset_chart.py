@@ -168,18 +168,7 @@ def generate_html(assets):
                     maintainAspectRatio: false,
                     plugins: {{
                         legend: {{
-                            display: true,
-                            position: 'bottom',
-                            labels: {{
-                                padding: 15,
-                                usePointStyle: true,
-                                pointStyle: 'circle',
-                                font: {{
-                                    family: "'Courier New', Courier, monospace",
-                                    size: 11
-                                }},
-                                color: '#37352f'
-                            }}
+                            display: false,
                         }},
                         tooltip: {{
                             backgroundColor: '#37352f',
@@ -203,7 +192,7 @@ def generate_html(assets):
                             font: {{
                                 family: "'Courier New', Courier, monospace",
                                 weight: 'bold',
-                                size: 10
+                                size: 12
                             }},
                             formatter: function(value, context) {{
                                 let percentage = Math.round((value / total) * 100);
