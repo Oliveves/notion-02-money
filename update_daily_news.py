@@ -56,14 +56,13 @@ def update_block(token, block_id, news_item):
         "paragraph": {
             "rich_text": [
                 {
-                    "type": "text",
-                    "text": { "content": "오늘의 뉴스 📊  " },
-                    "annotations": { "color": "gray" }
+                    "type": "equation",
+                    "equation": { "expression": "\\color{gray} \\textsf{\\scriptsize 오늘의 뉴스 📊 }" }
                 },
                 {
                     "type": "text",
                     "text": { 
-                        "content": title,
+                        "content": " " + title,
                         "link": { "url": link }
                     },
                     "annotations": { "color": "default" }
