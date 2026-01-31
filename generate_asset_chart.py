@@ -216,7 +216,11 @@ def generate_html(assets):
     return html
 
 def main():
-    token = os.environ.get("NOTION_TOKEN", "ntn_I3641115422aw21TI9L4EKCf7Cwt6bPS5Exy3b7cxpU9Oh")
+    token = os.environ.get("NOTION_TOKEN")
+    if not token:
+        print("Error: NOTION_TOKEN environment variable not set.")
+        sys.exit(1)
+    
     db_id = "2f90d907-031e-8105-8ed9-d2dbd48595ce" # My Assets
     
     print("Fetching assets...")

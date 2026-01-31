@@ -326,10 +326,10 @@ def main():
     # Trading Journal Database ID
     db_id = "2f90d907-031e-805c-be36-ebd342683bfa"
     
+    token = os.environ.get("NOTION_TOKEN")
     if not token:
-        print("Notion token missing.")
-        # Fallback for local testing if env var not set (using the one from chat context)
-        token = "ntn_I3641115422aw21TI9L4EKCf7Cwt6bPS5Exy3b7cxpU9Oh"
+        print("Error: NOTION_TOKEN environment variable not set.")
+        sys.exit(1)
         
     print(f"Fetching Notion data for DB: {db_id}")
     raw_data = fetch_db_data(token, db_id)
