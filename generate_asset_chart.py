@@ -52,6 +52,7 @@ def fetch_assets(token, db_id):
         
     return assets
 
+def generate_html(assets):
     # Simple Notion Color Mapping
     # Notion Colors (Light Mode)
     # Gray, Brown, Orange, Yellow, Green, Blue, Purple, Pink, Red
@@ -147,7 +148,7 @@ def fetch_assets(token, db_id):
 
             const ctx = document.getElementById('assetChart').getContext('2d');
             const myChart = new Chart(ctx, {{
-                type: 'doughnut',
+                type: 'pie',
                 data: {{
                     labels: labels,
                     datasets: [{{
@@ -194,7 +195,6 @@ def fetch_assets(token, db_id):
                             }}
                         }}
                     }},
-                    cutout: '55%',
                     layout: {{
                         padding: 0
                     }}
