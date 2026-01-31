@@ -6,6 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Asset Allocation</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
         <style>
             ::-webkit-scrollbar { display: none; }
             html { -ms-overflow-style: none; scrollbar-width: none; }
@@ -41,7 +42,7 @@
                 width: 100%; 
                 max-width: 600px; 
                 text-align: left;
-                padding-bottom: 8px; /* Match calendar header spacing roughly */
+                padding-bottom: 8px;
             }
             .total-assets {
                 margin-top: 20px;
@@ -60,6 +61,9 @@
         </div>
 
         <script>
+            // Register DataLabels Plugin
+            Chart.register(ChartDataLabels);
+
             const rawData = [{"name": "\uccad\ub144\uc801\uae08", "amount": 4400000, "type": "\uc801\uae08"}, {"name": "\ube44\uc0c1\uae08", "amount": 0, "type": "\ube44\uc0c1\uae08"}, {"name": "\ubbf8\uad6d\uc8fc\uc2dd", "amount": 5000000, "type": "\ubbf8\uad6d\uc8fc\uc2dd"}, {"name": "\ucf54\uc778", "amount": 2000000, "type": "\ucf54\uc778"}, {"name": "\ud55c\uad6d\uc8fc\uc2dd", "amount": 3000000, "type": "\ud55c\uad6d\uc8fc\uc2dd"}, {"name": "\uc785\ucd9c\uae08", "amount": 1600000, "type": "\ud604\uae08"}, {"name": "\uc8fc\ud0dd\uccad\uc57d", "amount": 5400000, "type": "\uccad\uc57d"}];
             
             const labels = rawData.map(d => d.name);
@@ -122,6 +126,22 @@
                                     return label;
                                 }
                             }
+                        },
+                        datalabels: {
+                            color: '#37352f',
+                            font: {
+                                family: "'Courier New', Courier, monospace",
+                                weight: 'bold',
+                                size: 10
+                            },
+                            formatter: function(value, context) {
+                                let percentage = Math.round((value / total) * 100);
+                                if (percentage < 3) return null; // Hide labels for very small slices
+                                return context.chart.data.labels[context.dataIndex] + '\n' + percentage + '%';
+                            },
+                            align: 'center',
+                            anchor: 'center',
+                            textAlign: 'center'
                         }
                     },
                     layout: {

@@ -77,6 +77,7 @@ def generate_html(assets):
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Asset Allocation</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
         <style>
             ::-webkit-scrollbar {{ display: none; }}
             html {{ -ms-overflow-style: none; scrollbar-width: none; }}
@@ -112,7 +113,7 @@ def generate_html(assets):
                 width: 100%; 
                 max-width: 600px; 
                 text-align: left;
-                padding-bottom: 8px; /* Match calendar header spacing roughly */
+                padding-bottom: 8px;
             }}
             .total-assets {{
                 margin-top: 20px;
@@ -131,6 +132,9 @@ def generate_html(assets):
         </div>
 
         <script>
+            // Register DataLabels Plugin
+            Chart.register(ChartDataLabels);
+
             const rawData = {json.dumps(assets)};
             
             const labels = rawData.map(d => d.name);
@@ -193,6 +197,22 @@ def generate_html(assets):
                                     return label;
                                 }}
                             }}
+                        }},
+                        datalabels: {{
+                            color: '#37352f',
+                            font: {{
+                                family: "'Courier New', Courier, monospace",
+                                weight: 'bold',
+                                size: 10
+                            }},
+                            formatter: function(value, context) {{
+                                let percentage = Math.round((value / total) * 100);
+                                if (percentage < 3) return null; // Hide labels for very small slices
+                                return context.chart.data.labels[context.dataIndex] + '\\n' + percentage + '%';
+                            }},
+                            align: 'center',
+                            anchor: 'center',
+                            textAlign: 'center'
                         }}
                     }},
                     layout: {{
