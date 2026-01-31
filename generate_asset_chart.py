@@ -192,7 +192,7 @@ def generate_html(assets):
                             font: {{
                                 family: "'Courier New', Courier, monospace",
                                 weight: 'bold',
-                                size: 12
+                                size: 20
                             }},
                             formatter: function(value, context) {{
                                 let percentage = Math.round((value / total) * 100);
