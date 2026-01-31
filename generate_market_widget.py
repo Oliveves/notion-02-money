@@ -157,14 +157,23 @@ def generate_html(market_data):
 
 def main():
     print("Fetching market data...")
-    data = fetch_market_data()
-    
+    try:
+        data = fetch_market_data()
+    except Exception as e:
+        print(f"Global Error fetching data: {e}")
+        data = [] # Fallback to empty
+
     print("Generating HTML...")
-    html = generate_html(data)
-    
-    with open("market_widget.html", "w", encoding="utf-8") as f:
-        f.write(html)
-    print("market_widget.html created.")
+    try:
+        html = generate_html(data)
+        with open("market_widget.html", "w", encoding="utf-8") as f:
+            f.write(html)
+        print("market_widget.html created.")
+    except Exception as e:
+        print(f"Error writing HTML: {e}")
+        # Write minimal error file to prevent 404
+        with open("market_widget.html", "w", encoding="utf-8") as f:
+            f.write("<html><body>Market Data Unavailable</body></html>")
 
 if __name__ == "__main__":
     main()
