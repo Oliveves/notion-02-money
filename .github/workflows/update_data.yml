@@ -26,12 +26,12 @@ jobs:
 
     - name: Run Calendar Widget Script
       env:
-        NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        NOTION_TOKEN: ${{ secrets.AUTOBOT_TOKEN }}
       run: python generate_calendar_widget.py
 
     - name: Run Asset Chart Script
       env:
-        NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        NOTION_TOKEN: ${{ secrets.AUTOBOT_TOKEN }}
       run: python generate_asset_chart.py
     
     - name: Run Market Widget Script
@@ -40,19 +40,19 @@ jobs:
 
     - name: Run Monthly Log Script
       env:
-        NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        NOTION_TOKEN: ${{ secrets.AUTOBOT_TOKEN }}
       run: python update_monthly_log.py
       continue-on-error: true
       
     - name: Run Key Message Script (Optional)
       env:
-        NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        NOTION_TOKEN: ${{ secrets.AUTOBOT_TOKEN }}
       run: python update_key_message.py
       continue-on-error: true
 
     - name: Run Daily News Script
       env:
-        NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        NOTION_TOKEN: ${{ secrets.AUTOBOT_TOKEN }}
       run: python update_daily_news.py
       continue-on-error: true
 
