@@ -59,24 +59,8 @@ def find_or_create_monthly_db(token):
                     print(f"Found existing Monthly Returns DB: {block['id']}")
                     return block['id']
 
-    # 2. Create if not found
-    print("Creating 'Monthly Returns' Database...")
-    create_payload = {
-        "parent": { "type": "page_id", "page_id": PARENT_PAGE_ID },
-        "title": [ { "type": "text", "text": { "content": "Monthly Returns" } } ],
-        "properties": {
-            "Month": { "title": {} },
-            "Total Profit": { "number": { "format": "won" } },
-            "Total Loss": { "number": { "format": "won" } },
-            "Net Return": { "number": { "format": "won" } },
-            "Trade Count": { "number": { "format": "number" } }
-        },
-        "is_inline": True
-    }
-    
-    db = notion_request(token, "databases", method="POST", payload=create_payload)
-    if db:
-        return db.get("id")
+    # 2. If not found, return None (User will create manually)
+    print("Monthly Returns DB not found via search. Please confirm it exists and Bot has access.")
     return None
 
 def fetch_trading_data(token):
