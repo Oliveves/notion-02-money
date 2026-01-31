@@ -194,7 +194,7 @@ def generate_html(assets):
                                     align: 'top',
                                     font: {{
                                         family: "'Courier New', Courier, monospace",
-                                        size: 11,
+                                        size: 9,
                                         weight: 'normal'
                                     }},
                                     formatter: function(value, context) {{
