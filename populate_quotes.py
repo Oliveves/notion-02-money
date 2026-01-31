@@ -132,7 +132,8 @@ def create_page(token, db_id, content):
 def main():
     token = os.environ.get("NOTION_TOKEN")
     if not token:
-        token = "ntn_I3641115422aw21TI9L4EKCf7Cwt6bPS5Exy3b7cxpU9Oh"
+        print("Error: NOTION_TOKEN environment variable not set.")
+        sys.exit(1)
         
     db_id = "2f90d907-031e-80b6-a49b-d2b34e29359d"
     

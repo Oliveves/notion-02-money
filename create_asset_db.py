@@ -97,7 +97,10 @@ def add_entry(token, db_id, item, amount, asset_type):
     return False
 
 def main():
-    token = os.environ.get("NOTION_TOKEN", "ntn_I3641115422aw21TI9L4EKCf7Cwt6bPS5Exy3b7cxpU9Oh")
+    token = os.environ.get("NOTION_TOKEN")
+    if not token:
+        print("Error: NOTION_TOKEN environment variable not set.")
+        sys.exit(1)
     page_id = "2f90d907-031e-80e8-928d-c7617241966f" # Main page ID
     
     print("Creating 'My Assets' Database...")
