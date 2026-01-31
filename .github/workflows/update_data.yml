@@ -36,6 +36,12 @@ jobs:
       run: python update_key_message.py
       continue-on-error: true
 
+    - name: Run Daily News Script
+      env:
+        NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+      run: python update_daily_news.py
+      continue-on-error: true
+
     - name: Commit and Push changes
       run: |
         git config --global user.name 'github-actions[bot]'
