@@ -52,15 +52,21 @@ def fetch_assets(token, db_id):
         
     return assets
 
-def generate_html(assets):
-    # Prepare data for Chart.js
-    labels = [a["name"] for a in assets]
-    data = [a["amount"] for a in assets]
-    types = [a["type"] for a in assets]
-    
-    # Simple Color Mapping based on Type
-    # We can assign colors dynamically in JS or here.
-    # Let's do it in JS for a modern look (gradients or specific palettes).
+    # Simple Notion Color Mapping
+    # Notion Colors (Light Mode)
+    # Gray, Brown, Orange, Yellow, Green, Blue, Purple, Pink, Red
+    NOTION_COLORS = [
+        "#9B9A97", # Gray
+        "#E3E2E0", # Light Gray (Default)
+        "#EEE0DA", # Brown
+        "#FADEC9", # Orange
+        "#FDECC8", # Yellow
+        "#DBEDDB", # Green
+        "#D3E5EF", # Blue
+        "#E8DEEE", # Purple
+        "#F5E0E9", # Pink
+        "#FFE2DD", # Red
+    ]
     
     html = f"""
     <!DOCTYPE html>
@@ -71,16 +77,23 @@ def generate_html(assets):
         <title>Asset Allocation</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <style>
+            ::-webkit-scrollbar {{ display: none; }}
+            html {{ -ms-overflow-style: none; scrollbar-width: none; }}
+
+            :root {{
+                --bg-color: #ffffff;
+                --text-color: #37352f;
+            }}
             body {{
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                font-family: "Courier New", Courier, monospace;
                 margin: 0;
-                padding: 20px;
+                padding: 12px 20px 20px 20px;
+                background-color: var(--bg-color);
+                color: var(--text-color);
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                background-color: #ffffff; /* Transparent or White */
-                color: #37352f;
             }}
             .chart-container {{
                 position: relative;
@@ -88,64 +101,61 @@ def generate_html(assets):
                 max-width: 400px;
                 height: auto;
                 aspect-ratio: 1 / 1;
+                margin-top: 10px;
             }}
             h2 {{
-                margin-top: 0;
-                margin-bottom: 20px;
-                font-size: 1.2em;
-                font-weight: 600;
+                margin-top: 0; 
+                margin-bottom: 2px;
+                font-size: 0.9em; 
+                font-weight: bold; 
+                width: 100%; 
+                max-width: 600px; 
+                text-align: left;
+                padding-bottom: 8px; /* Match calendar header spacing roughly */
             }}
             .total-assets {{
-                margin-top: 15px;
-                font-size: 1em;
+                margin-top: 20px;
+                font-size: 0.85em;
                 font-weight: bold;
-                color: #666;
+                color: #37352f;
+                font-family: "Courier New", Courier, monospace;
             }}
         </style>
     </head>
     <body>
-        <h2>Asset Allocation</h2>
+        <h2>My Assets</h2>
+        <div class="total-assets" id="totalDisplay"></div>
         <div class="chart-container">
             <canvas id="assetChart"></canvas>
         </div>
-        <div class="total-assets" id="totalDisplay"></div>
 
         <script>
             const rawData = {json.dumps(assets)};
             
-            // Group by Type or just show all Items? User asked for "Pie Chart of Investment Funds".
-            // Showing all items usually looks busy if many. 
-            // Better to offer a Toggle? For now, let's show Items directly as it's likely few major accounts (Tesla, Bitcoin, Cash).
-            
             const labels = rawData.map(d => d.name);
             const data = rawData.map(d => d.amount);
-            const types = rawData.map(d => d.type);
             
             // Calculate Total
             const total = data.reduce((a, b) => a + b, 0);
-            document.getElementById('totalDisplay').innerText = 'Total: ₩' + total.toLocaleString();
+            document.getElementById('totalDisplay').innerText = 'TOTAL: ₩' + total.toLocaleString();
 
-            // Colors based on Type
-            const typeColors = {{
-                "Stock": "#FF9500", // Orange
-                "Cash": "#8E8E93",  // Gray
-                "Crypto": "#007AFF", // Blue
-                "Real Estate": "#FFCC00", // Yellow
-                "Other": "#AF52DE"   // Purple
-            }};
+            // Notion Colors
+            const notionPalette = {json.dumps(NOTION_COLORS)};
             
-            const bgColors = rawData.map(d => typeColors[d.type] || "#CCCCCC");
+            // Assign colors cyclically
+            const bgColors = rawData.map((_, i) => notionPalette[i % notionPalette.length]);
 
             const ctx = document.getElementById('assetChart').getContext('2d');
             const myChart = new Chart(ctx, {{
-                type: 'doughnut', // Doughnut looks more modern than simple Pie
+                type: 'doughnut',
                 data: {{
                     labels: labels,
                     datasets: [{{
                         data: data,
                         backgroundColor: bgColors,
-                        borderWidth: 0,
-                        hoverOffset: 10
+                        borderWidth: 1,
+                        borderColor: '#ffffff',
+                        hoverOffset: 4
                     }}]
                 }},
                 options: {{
@@ -153,16 +163,23 @@ def generate_html(assets):
                     maintainAspectRatio: false,
                     plugins: {{
                         legend: {{
+                            display: true,
                             position: 'bottom',
                             labels: {{
-                                padding: 20,
+                                padding: 15,
                                 usePointStyle: true,
+                                pointStyle: 'circle',
                                 font: {{
+                                    family: "'Courier New', Courier, monospace",
                                     size: 11
-                                }}
+                                }},
+                                color: '#37352f'
                             }}
                         }},
                         tooltip: {{
+                            backgroundColor: '#37352f',
+                            titleFont: {{ family: "'Courier New', Courier, monospace" }},
+                            bodyFont: {{ family: "'Courier New', Courier, monospace" }},
                             callbacks: {{
                                 label: function(context) {{
                                     let label = context.label || '';
@@ -177,9 +194,9 @@ def generate_html(assets):
                             }}
                         }}
                     }},
-                    cutout: '60%', // Doughnut thickness
+                    cutout: '55%',
                     layout: {{
-                        padding: 10
+                        padding: 0
                     }}
                 }}
             }});
