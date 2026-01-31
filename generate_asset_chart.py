@@ -189,19 +189,34 @@ def generate_html(assets):
                         }},
                         datalabels: {{
                             color: '#37352f',
-                            font: {{
-                                family: "'Courier New', Courier, monospace",
-                                weight: 'bold',
-                                size: 20
-                            }},
-                            formatter: function(value, context) {{
-                                let percentage = Math.round((value / total) * 100);
-                                if (percentage < 3) return null; // Hide labels for very small slices
-                                return context.chart.data.labels[context.dataIndex] + '\\n' + percentage + '%';
-                            }},
-                            align: 'center',
-                            anchor: 'center',
-                            textAlign: 'center'
+                            labels: {{
+                                name: {{
+                                    align: 'top',
+                                    font: {{
+                                        family: "'Courier New', Courier, monospace",
+                                        size: 11,
+                                        weight: 'normal'
+                                    }},
+                                    formatter: function(value, context) {{
+                                        let percentage = Math.round((value / total) * 100);
+                                        if (percentage < 3) return null;
+                                        return context.chart.data.labels[context.dataIndex];
+                                    }}
+                                }},
+                                value: {{
+                                    align: 'bottom',
+                                    font: {{
+                                        family: "'Courier New', Courier, monospace",
+                                        size: 20,
+                                        weight: 'bold'
+                                    }},
+                                    formatter: function(value, context) {{
+                                        let percentage = Math.round((value / total) * 100);
+                                        if (percentage < 3) return null;
+                                        return percentage + '%';
+                                    }}
+                                }}
+                            }}
                         }}
                     }},
                     layout: {{
