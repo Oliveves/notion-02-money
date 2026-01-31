@@ -1,0 +1,125 @@
+
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Asset Allocation</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                margin: 0;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background-color: #ffffff; /* Transparent or White */
+                color: #37352f;
+            }
+            .chart-container {
+                position: relative;
+                width: 90vw;
+                max-width: 400px;
+                height: auto;
+                aspect-ratio: 1 / 1;
+            }
+            h2 {
+                margin-top: 0;
+                margin-bottom: 20px;
+                font-size: 1.2em;
+                font-weight: 600;
+            }
+            .total-assets {
+                margin-top: 15px;
+                font-size: 1em;
+                font-weight: bold;
+                color: #666;
+            }
+        </style>
+    </head>
+    <body>
+        <h2>Asset Allocation</h2>
+        <div class="chart-container">
+            <canvas id="assetChart"></canvas>
+        </div>
+        <div class="total-assets" id="totalDisplay"></div>
+
+        <script>
+            const rawData = [{"name": "\uc6d0\ud654 \ud604\uae08", "amount": 2000000, "type": "Cash"}, {"name": "\ud14c\uc2ac\ub77c(Tesla)", "amount": 8000000, "type": "Stock"}, {"name": "\uc0bc\uc131\uc804\uc790", "amount": 5000000, "type": "Stock"}, {"name": "\ube44\ud2b8\ucf54\uc778(BTC)", "amount": 3000000, "type": "Crypto"}, {"name": "\ub2ec\ub7ec \uc608\uc218\uae08", "amount": 1500000, "type": "Cash"}, {"name": "\uc8fc\ud0dd\uccad\uc57d", "amount": 10000000, "type": "Real Estate"}];
+            
+            // Group by Type or just show all Items? User asked for "Pie Chart of Investment Funds".
+            // Showing all items usually looks busy if many. 
+            // Better to offer a Toggle? For now, let's show Items directly as it's likely few major accounts (Tesla, Bitcoin, Cash).
+            
+            const labels = rawData.map(d => d.name);
+            const data = rawData.map(d => d.amount);
+            const types = rawData.map(d => d.type);
+            
+            // Calculate Total
+            const total = data.reduce((a, b) => a + b, 0);
+            document.getElementById('totalDisplay').innerText = 'Total: ₩' + total.toLocaleString();
+
+            // Colors based on Type
+            const typeColors = {
+                "Stock": "#FF9500", // Orange
+                "Cash": "#8E8E93",  // Gray
+                "Crypto": "#007AFF", // Blue
+                "Real Estate": "#FFCC00", // Yellow
+                "Other": "#AF52DE"   // Purple
+            };
+            
+            const bgColors = rawData.map(d => typeColors[d.type] || "#CCCCCC");
+
+            const ctx = document.getElementById('assetChart').getContext('2d');
+            const myChart = new Chart(ctx, {
+                type: 'doughnut', // Doughnut looks more modern than simple Pie
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: bgColors,
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    let value = context.raw;
+                                    let percentage = Math.round((value / total) * 100) + '%';
+                                    label += '₩' + value.toLocaleString() + ' (' + percentage + ')';
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '60%', // Doughnut thickness
+                    layout: {
+                        padding: 10
+                    }
+                }
+            });
+        </script>
+    </body>
+    </html>
+    

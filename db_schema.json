@@ -1,0 +1,64 @@
+﻿{
+    "object":  "database",
+    "id":  "2f90d907-031e-80b6-a49b-d2b34e29359d",
+    "cover":  null,
+    "icon":  {
+                 "type":  "external",
+                 "external":  {
+                                  "url":  "https://www.notion.so/icons/exclamation-mark_gray.svg"
+                              }
+             },
+    "created_time":  "2026-01-31T11:45:00.000Z",
+    "created_by":  {
+                       "object":  "user",
+                       "id":  "b8be8172-bfb2-4063-81d2-223ab5eb8700"
+                   },
+    "last_edited_by":  {
+                           "object":  "user",
+                           "id":  "b8be8172-bfb2-4063-81d2-223ab5eb8700"
+                       },
+    "last_edited_time":  "2026-01-31T13:04:00.000Z",
+    "title":  [
+                  {
+                      "type":  "text",
+                      "text":  {
+                                   "content":  "Key Message(입력)",
+                                   "link":  null
+                               },
+                      "annotations":  {
+                                          "bold":  false,
+                                          "italic":  false,
+                                          "strikethrough":  false,
+                                          "underline":  false,
+                                          "code":  false,
+                                          "color":  "default"
+                                      },
+                      "plain_text":  "Key Message(입력)",
+                      "href":  null
+                  }
+              ],
+    "description":  [
+
+                    ],
+    "is_inline":  false,
+    "properties":  {
+                       "이름":  {
+                                  "id":  "title",
+                                  "name":  "이름",
+                                  "description":  null,
+                                  "type":  "title",
+                                  "title":  {
+
+                                            }
+                              }
+                   },
+    "parent":  {
+                   "type":  "page_id",
+                   "page_id":  "2f90d907-031e-80e8-928d-c7617241966f"
+               },
+    "url":  "https://www.notion.so/2f90d907031e80b6a49bd2b34e29359d",
+    "public_url":  null,
+    "archived":  false,
+    "in_trash":  false,
+    "request_id":  "7b8a9c0b-84ec-4df5-8989-40188661f738"
+}
