@@ -60,10 +60,29 @@ def escape_latex(text):
     # Collapse multiple spaces into one
     clean_text = re.sub(r'\s+', ' ', clean_text).strip()
     
-    # Escape the few allowed specials that need it in LaTeX
     clean_text = clean_text.replace('%', r'\%')
     
     return clean_text
+
+def chunk_text(text, limit=26):
+    words = text.split()
+    lines = []
+    current_line = []
+    current_len = 0
+    
+    for word in words:
+        if current_len + len(word) + 1 > limit:
+            lines.append(" ".join(current_line))
+            current_line = [word]
+            current_len = len(word)
+        else:
+            current_line.append(word)
+            current_len += len(word) + 1
+            
+    if current_line:
+        lines.append(" ".join(current_line))
+        
+    return lines
 
 def update_block(token, block_id, news_item):
     url = f"https://api.notion.com/v1/blocks/{block_id}"
@@ -79,11 +98,21 @@ def update_block(token, block_id, news_item):
     # Escape title for LaTeX
     safe_title = escape_latex(title)
     
-    # Construct Rich Text Param
-    # Structure matching callout_children.json:
-    # \color{gray} \textsf{\scriptsize 오늘의 뉴스 📊 \color{black} TITLE} \color{black}
+    # Wrap text
+    lines = chunk_text(safe_title, 26)
     
-    expression = f"\\color{{gray}} \\textsf{{\\scriptsize 오늘의 뉴스 📊 \\color{{black}} {safe_title}}} \\color{{black}}"
+    # Construct Lines for LaTeX
+    # Header
+    latex_lines = [r"\color{gray} \textsf{\scriptsize 오늘의 뉴스 📊}"]
+    
+    # content items
+    for line in lines:
+        latex_lines.append(fr"\color{{black}} \textsf{{\scriptsize {line}}}")
+        
+    # Join with \\ for substack
+    # Use substack for vertical alignment
+    inner_content = r" \\ ".join(latex_lines)
+    expression = f"\\substack{{ {inner_content} }}"
     
     payload = {
         "paragraph": {
