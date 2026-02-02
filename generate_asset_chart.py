@@ -32,16 +32,28 @@ def fetch_assets(token, db_id):
     for page in results:
         props = page.get("properties", {})
         
-        # Item Name
-        title_list = props.get("Item", {}).get("title", [])
-        if not title_list: continue
+        # Item Name (Title) - Try '항목' (Korean) or 'Item' (English)
+        title_list = props.get("항목", {}).get("title", [])
+        if not title_list:
+            title_list = props.get("Item", {}).get("title", [])
+            
+        if not title_list:
+            # Debugging: Print keys if title not found
+            # print(f"Skipping page {page['id']}: '항목' or 'Item' property not found. Keys: {list(props.keys())}")
+            continue
+            
         name = "".join([t.get("plain_text", "") for t in title_list])
         
-        # Amount
-        amount = props.get("Amount", {}).get("number", 0)
+        # Amount (Number) - Try '금액' or 'Amount'
+        amount_obj = props.get("금액", {})
+        if not amount_obj: amount_obj = props.get("Amount", {})
+        amount = amount_obj.get("number", 0)
         
-        # Type
-        asset_type = props.get("Type", {}).get("select", {})
+        # Type (Select) - Try '유형' or 'Type'
+        type_obj = props.get("유형", {})
+        if not type_obj: type_obj = props.get("Type", {})
+        
+        asset_type = type_obj.get("select", {})
         type_name = asset_type.get("name", "Other") if asset_type else "Other"
         
         assets.append({
