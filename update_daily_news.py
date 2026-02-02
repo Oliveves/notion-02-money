@@ -183,7 +183,7 @@ def main():
                     "content": selected_news['title'],
                     "link": { "url": selected_news['link'] }
                 },
-                "annotations": { "color": "default", "code": False } 
+                "annotations": { "color": "default", "underline": False } 
             }]
         }
     }
