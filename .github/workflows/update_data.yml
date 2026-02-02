@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: '*/30 * * * *' # Run every 30 minutes
   workflow_dispatch:      # Allow manual trigger
+  push:
+    branches:
+      - main
 
 jobs:
   update-widgets:

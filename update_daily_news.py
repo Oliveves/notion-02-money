@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import random
+import re
 import urllib.request
 import urllib.error
 import xml.etree.ElementTree as ET
@@ -37,6 +38,25 @@ def fetch_economic_news():
         print(f"Error fetching RSS: {e}")
         return []
 
+def escape_latex(text):
+    """
+    Escapes special characters for LaTeX to prevent rendering errors.
+    """
+    special_chars = {
+        '&': r'\&',
+        '%': r'\%',
+        '$': r'\$',
+        '#': r'\#',
+        '_': r'\_',
+        '{': r'\{',
+        '}': r'\}',
+        '~': r'\textasciitilde{}',
+        '^': r'\^{}',
+        '\\': r'\textbackslash{}',
+    }
+    regex = re.compile('|'.join(re.escape(str(key)) for key in sorted(special_chars.keys(), key = lambda item: - len(item))))
+    return regex.sub(lambda match: special_chars[match.group()], text)
+
 def update_block(token, block_id, news_item):
     url = f"https://api.notion.com/v1/blocks/{block_id}"
     headers = {
@@ -48,6 +68,9 @@ def update_block(token, block_id, news_item):
     title = news_item['title']
     link = news_item['link']
     
+    # Escape title for LaTeX
+    safe_title = escape_latex(title)
+    
     # Construct Rich Text Param
     # 1. "오늘의 뉴스 📊 " (Gray)
     # 2. Title (Default, Link)
@@ -58,7 +81,7 @@ def update_block(token, block_id, news_item):
                 {
                     "type": "equation",
                     "equation": { 
-                        "expression": f"\\scriptsize \\color{{gray}} \\text{{오늘의 뉴스 📊 }} \\color{{black}} \\text{{{title}}}" 
+                        "expression": f"\\scriptsize \\color{{gray}} \\text{{오늘의 뉴스 📊 }} \\color{{black}} \\text{{{safe_title}}}" 
                     }
                 }
             ]
