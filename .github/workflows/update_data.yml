@@ -59,6 +59,12 @@ jobs:
       run: python update_daily_news.py
       continue-on-error: true
 
+    - name: Run Date Header Script
+      env:
+        NOTION_TOKEN: ${{ secrets.AUTOBOT_TOKEN }}
+      run: python update_date_header.py
+      continue-on-error: true
+
     - name: Commit and Push changes
       run: |
         git config --global user.name 'github-actions[bot]'
