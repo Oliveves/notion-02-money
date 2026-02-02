@@ -182,7 +182,7 @@ def generate_interactive_html(calendar_data):
                 border: 1px solid transparent;
                 cursor: pointer;
                 font-family: "Courier New", Courier, monospace;
-                font-size: 0.4em; /* Very small as requested */
+                font-size: 0.5em; /* Adjusted to 0.5em as requested */
                 color: #999;
                 padding: 0 1px; /* Tighter spacing */
                 border-radius: 4px;
