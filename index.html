@@ -51,9 +51,9 @@
                 border: 1px solid transparent;
                 cursor: pointer;
                 font-family: "Courier New", Courier, monospace;
-                font-size: 0.7em; /* Made smaller as requested */
+                font-size: 0.4em; /* Very small as requested */
                 color: #999;
-                padding: 0 4px;
+                padding: 0 1px; /* Tighter spacing */
                 border-radius: 4px;
                 transition: color 0.2s, background 0.2s;
             }
@@ -177,8 +177,8 @@
             const eventData = {"2026-02-02": [{"id": "2f90d907031e809ebb97fc4a7c11589a", "title": "P&G \ub9e4\ub3c4", "emoji": "\ud83d\udcb0", "display": "\ud83d\udcb0 P&G \ub9e4\ub3c4 (+31,000)"}, {"id": "2fb0d907031e80ed8197ca953f96089e", "title": "\uc0bc\uc131 SDI \ub9e4\ub3c4", "emoji": "\ud83d\udcb0", "display": "\ud83d\udcb0 \uc0bc\uc131 SDI \ub9e4\ub3c4"}]};
             let currentDate = new Date(); // Defaults to today on client side
 
-            const monthNames = ["January", "February", "March", "April", "May", "June",
-                                "July", "August", "September", "October", "November", "December"];
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
             function renderCalendar() {
                 const year = currentDate.getFullYear();
