@@ -95,10 +95,29 @@ def parse_data(results):
         # P&L
         profit = 0
         loss = 0
-        p_prop = props.get("판매수익") or props.get("Sale Profit")
-        if p_prop: profit = p_prop.get("number") or 0
-        l_prop = props.get("판매손실") or props.get("Sale Loss")
-        if l_prop: loss = l_prop.get("number") or 0
+        
+        # Try to find Profit
+        p_keys = ["판매수익", "Sale Profit", "수익", "Profit", "손익", "실현손익"]
+        for k in p_keys:
+            if k in props:
+                p_val = props[k].get("number")
+                if p_val is not None:
+                    profit = p_val
+                    break
+                    
+        # Try to find Loss
+        l_keys = ["판매손실", "Sale Loss", "손실", "Loss", "손실액", "손실금액"]
+        for k in l_keys:
+            if k in props:
+                l_val = props[k].get("number")
+                if l_val is not None:
+                    loss = l_val
+                    break
+        
+        # Logic: If Profit is negative, treat as Loss
+        if profit < 0:
+            loss = abs(profit) if loss == 0 else loss + abs(profit)
+            profit = 0
             
         # Icon
         icon = page.get("icon", {})
