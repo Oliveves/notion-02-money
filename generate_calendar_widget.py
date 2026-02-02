@@ -289,11 +289,11 @@ def generate_interactive_html(calendar_data):
             }}
             .day-number {{ pointer-events: none; }}
 
-            .nav-container {
+            .nav-container {{
                 display: flex;
                 align-items: center;
                 gap: 2px;
-            }
+            }}
         </style>
     </head>
     <body>
@@ -322,7 +322,7 @@ def generate_interactive_html(calendar_data):
                 
                 // Update Header
                 const monthName = monthNames[month];
-                document.getElementById('monthLabel').innerText = `${year} ${monthName}`;
+                document.getElementById('monthLabel').innerText = `${{year}} ${{monthName}}`;
                 
                 // Calculate Grid
                 const firstDay = new Date(year, month, 1);
