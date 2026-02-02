@@ -162,8 +162,9 @@ def generate_interactive_html(calendar_data):
             
             .header-container {{
                 display: flex;
-                justify-content: space-between;
+                justify-content: flex-start; /* Align left */
                 align-items: center;
+                gap: 15px; /* Space between title and buttons */
                 width: 100%;
                 max-width: 600px;
                 margin-bottom: 10px;
