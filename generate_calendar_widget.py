@@ -182,9 +182,9 @@ def generate_interactive_html(calendar_data):
                 border: 1px solid transparent;
                 cursor: pointer;
                 font-family: "Courier New", Courier, monospace;
-                font-size: 0.7em; /* Made smaller as requested */
+                font-size: 0.4em; /* Very small as requested */
                 color: #999;
-                padding: 0 4px;
+                padding: 0 1px; /* Tighter spacing */
                 border-radius: 4px;
                 transition: color 0.2s, background 0.2s;
             }}
@@ -308,8 +308,8 @@ def generate_interactive_html(calendar_data):
             const eventData = {data_json};
             let currentDate = new Date(); // Defaults to today on client side
 
-            const monthNames = ["January", "February", "March", "April", "May", "June",
-                                "July", "August", "September", "October", "November", "December"];
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
             function renderCalendar() {{
                 const year = currentDate.getFullYear();
