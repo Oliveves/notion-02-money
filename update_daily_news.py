@@ -45,32 +45,26 @@ def escape_latex(text):
     """
     if not text:
         return ""
-        
-    # 1. Remove newlines and quotes
-    text = text.replace("\n", " ").replace("\r", "").replace('"', "'")
+    # aggressive whitelist: allow Hangul, English, Numbers, Space, and safe punctuation
+    # \uAC00-\uD7A3 : Hangul Syllables
+    # \u3131-\u318E : Hangul Compatibility Jamo
+    # a-zA-Z0-9 : Alphanumeric
+    # \s : Whitespace
+    # \.,\-\?! : Safe punctuation
     
-    # 2. Simple replacements for unsupported/problematic chars
-    text = text.replace("\\", "/")      # backslash -> slash
-    text = text.replace("{", "(")       # curly braces -> parens
-    text = text.replace("}", ")")
-    text = text.replace("[", "(")       # brackets -> parens
-    text = text.replace("]", ")")
-    text = text.replace("~", "-")       # tilde -> dash
-    text = text.replace("^", " ")       # caret -> space
+    # First, simple replacements for common blockers
+    text = text.replace('"', "'").replace("\n", " ").replace("\\", "")
     
-    # 3. Escape chars that ARE supported but need escaping
-    # &, %, $, #, _
-    special_chars = {
-        '&': r'\&',
-        '%': r'\%',
-        '$': r'\$',
-        '#': r'\#',
-        '_': r'\_',
-    }
+    # Remove any character NOT in the whitelist
+    # We allow: Hangul, Alphanumeric, Space, and .,-?!%()
+    safe_pattern = re.compile(r'[^ \uAC00-\uD7A3\u3131-\u318Ea-zA-Z0-9\.,\-\?!\%\(\)]+')
     
-    # regex to match any of the keys
-    regex = re.compile('|'.join(re.escape(k) for k in special_chars.keys()))
-    return regex.sub(lambda m: special_chars[m.group()], text)
+    clean_text = safe_pattern.sub('', text)
+    
+    # Escape the few allowed specials that need it in LaTeX
+    clean_text = clean_text.replace('%', r'\%')
+    
+    return clean_text
 
 def update_block(token, block_id, news_item):
     url = f"https://api.notion.com/v1/blocks/{block_id}"

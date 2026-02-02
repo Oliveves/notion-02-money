@@ -206,6 +206,7 @@ def generate_html(assets):
                             labels: {{
                                 name: {{
                                     align: 'top',
+                                    offset: -4, // Pull closer to center (default is +4 away)
                                     font: {{
                                         family: "'Courier New', Courier, monospace",
                                         size: 9,
@@ -219,6 +220,7 @@ def generate_html(assets):
                                 }},
                                 value: {{
                                     align: 'bottom',
+                                    offset: -4, // Pull closer to center
                                     font: {{
                                         family: "'Courier New', Courier, monospace",
                                         size: 20,
