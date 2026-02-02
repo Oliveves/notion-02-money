@@ -39,10 +39,6 @@ def fetch_economic_news():
         return []
 
 def escape_latex(text):
-    """
-    Simpler escape for Notion TeX to avoid 'Invalid equation' errors.
-    Replaces unsupported chars with safe alternatives.
-    """
     if not text:
         return ""
     # aggressive whitelist: allow Hangul, English, Numbers, Space, and safe punctuation
@@ -53,13 +49,16 @@ def escape_latex(text):
     # \.,\-\?! : Safe punctuation
     
     # First, simple replacements for common blockers
-    text = text.replace('"', "'").replace("\n", " ").replace("\\", "")
+    text = text.replace('"', "'").replace("\n", " ").replace("\\", " ")
     
-    # Remove any character NOT in the whitelist
-    # We allow: Hangul, Alphanumeric, Space, and .,-?!%()
-    safe_pattern = re.compile(r'[^ \uAC00-\uD7A3\u3131-\u318Ea-zA-Z0-9\.,\-\?!\%\(\)]+')
+    # Replace any character NOT in the whitelist with a SPACE
+    safe_pattern = re.compile(r'[^ \uAC00-\uD7A3\u3131-\u318Ea-zA-Z0-9\.,\-\?!\%\(\)]')
     
-    clean_text = safe_pattern.sub('', text)
+    # Use space instead of empty string
+    clean_text = safe_pattern.sub(' ', text)
+    
+    # Collapse multiple spaces into one
+    clean_text = re.sub(r'\s+', ' ', clean_text).strip()
     
     # Escape the few allowed specials that need it in LaTeX
     clean_text = clean_text.replace('%', r'\%')
