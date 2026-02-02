@@ -46,13 +46,15 @@ def escape_latex(text):
     if not text:
         return ""
         
-    # 1. Remove newlines
-    text = text.replace("\n", " ").replace("\r", "")
+    # 1. Remove newlines and quotes
+    text = text.replace("\n", " ").replace("\r", "").replace('"', "'")
     
     # 2. Simple replacements for unsupported/problematic chars
     text = text.replace("\\", "/")      # backslash -> slash
     text = text.replace("{", "(")       # curly braces -> parens
     text = text.replace("}", ")")
+    text = text.replace("[", "(")       # brackets -> parens
+    text = text.replace("]", ")")
     text = text.replace("~", "-")       # tilde -> dash
     text = text.replace("^", " ")       # caret -> space
     
@@ -85,8 +87,10 @@ def update_block(token, block_id, news_item):
     safe_title = escape_latex(title)
     
     # Construct Rich Text Param
-    # 1. "오늘의 뉴스 📊 " (Gray)
-    # 2. Title (Default, Link)
+    # Structure matching callout_children.json:
+    # \color{gray} \textsf{\scriptsize 오늘의 뉴스 📊 \color{black} TITLE} \color{black}
+    
+    expression = f"\\color{{gray}} \\textsf{{\\scriptsize 오늘의 뉴스 📊 \\color{{black}} {safe_title}}} \\color{{black}}"
     
     payload = {
         "paragraph": {
@@ -94,7 +98,7 @@ def update_block(token, block_id, news_item):
                 {
                     "type": "equation",
                     "equation": { 
-                        "expression": f"\\scriptsize \\color{{gray}} \\text{{오늘의 뉴스 📊 }} \\color{{black}} \\text{{{safe_title}}}" 
+                        "expression": expression
                     }
                 }
             ]
