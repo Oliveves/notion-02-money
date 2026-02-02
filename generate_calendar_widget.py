@@ -79,8 +79,8 @@ def parse_data(results):
         if not date_str: continue
         date_str = date_str[:10] # YYYY-MM-DD
         
-        # Find Title Property
-        title_candidates = ["이름", "Name", "제목", "Item"]
+        # Find Title Property (Item Name)
+        title_candidates = ["종목명", "이름", "Name", "제목", "Item"]
         title_list = []
         for key in title_candidates:
             if key in props and props[key].get("type") == "title":
@@ -96,9 +96,32 @@ def parse_data(results):
         title = "".join([t.get("plain_text", "") for t in title_list])
         if not title: title = "Untitled"
         
+        # Parse P&L if available
+        # Profit: '판매수익' or 'Sale Profit'
+        # Loss: '판매손실' or 'Sale Loss'
+        profit = 0
+        loss = 0
+        
+        p_prop = props.get("판매수익") or props.get("Sale Profit")
+        if p_prop: profit = p_prop.get("number") or 0
+            
+        l_prop = props.get("판매손실") or props.get("Sale Loss")
+        if l_prop: loss = l_prop.get("number") or 0
+            
         # Icon
         icon = page.get("icon", {})
         emoji = icon.get("emoji") if icon and icon.get("type") == "emoji" else "💰"
+        
+        # Construct Display String
+        # Emoji Title (Profit / Loss)
+        display_str = f"{emoji} {title}"
+        
+        details = []
+        if profit > 0: details.append(f"+{profit:,}")
+        if loss > 0: details.append(f"-{loss:,}")
+        
+        if details:
+            display_str += f" ({' '.join(details)})"
         
         if date_str not in calendar_data:
             calendar_data[date_str] = []
@@ -107,7 +130,7 @@ def parse_data(results):
             "id": page_id,
             "title": title,
             "emoji": emoji,
-            "display": f"{emoji} {title}"
+            "display": display_str
         })
         
     return calendar_data
