@@ -295,8 +295,8 @@ def generate_interactive_html(calendar_data):
         <div class="header-container">
             <h1 id="monthLabel">Loading...</h1>
             <div>
-                <button class="nav-btn" id="prevBtn">&lt;</button>
-                <button class="nav-btn" id="nextBtn">&gt;</button>
+                <button class="nav-btn" id="prevBtn">◀</button>
+                <button class="nav-btn" id="nextBtn">▶</button>
             </div>
         </div>
         
