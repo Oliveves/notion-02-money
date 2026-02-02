@@ -40,22 +40,35 @@ def fetch_economic_news():
 
 def escape_latex(text):
     """
-    Escapes special characters for LaTeX to prevent rendering errors.
+    Simpler escape for Notion TeX to avoid 'Invalid equation' errors.
+    Replaces unsupported chars with safe alternatives.
     """
+    if not text:
+        return ""
+        
+    # 1. Remove newlines
+    text = text.replace("\n", " ").replace("\r", "")
+    
+    # 2. Simple replacements for unsupported/problematic chars
+    text = text.replace("\\", "/")      # backslash -> slash
+    text = text.replace("{", "(")       # curly braces -> parens
+    text = text.replace("}", ")")
+    text = text.replace("~", "-")       # tilde -> dash
+    text = text.replace("^", " ")       # caret -> space
+    
+    # 3. Escape chars that ARE supported but need escaping
+    # &, %, $, #, _
     special_chars = {
         '&': r'\&',
         '%': r'\%',
         '$': r'\$',
         '#': r'\#',
         '_': r'\_',
-        '{': r'\{',
-        '}': r'\}',
-        '~': r'\textasciitilde{}',
-        '^': r'\^{}',
-        '\\': r'\textbackslash{}',
     }
-    regex = re.compile('|'.join(re.escape(str(key)) for key in sorted(special_chars.keys(), key = lambda item: - len(item))))
-    return regex.sub(lambda match: special_chars[match.group()], text)
+    
+    # regex to match any of the keys
+    regex = re.compile('|'.join(re.escape(k) for k in special_chars.keys()))
+    return regex.sub(lambda m: special_chars[m.group()], text)
 
 def update_block(token, block_id, news_item):
     url = f"https://api.notion.com/v1/blocks/{block_id}"
