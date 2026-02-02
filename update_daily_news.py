@@ -1,3 +1,4 @@
+# ... (Previous imports kept) ...
 import os
 import sys
 import json
@@ -13,133 +14,24 @@ sys.stderr.reconfigure(encoding='utf-8')
 
 def fetch_economic_news():
     # Google News RSS (Economy - Korea)
-    # Search query '경제' (Economy)
     rss_url = "https://news.google.com/rss/search?q=%EA%B2%BD%EC%A0%9C&hl=ko&gl=KR&ceid=KR:ko"
-    
     try:
         req = urllib.request.Request(rss_url)
         with urllib.request.urlopen(req) as response:
             if response.status == 200:
                 xml_data = response.read()
                 root = ET.fromstring(xml_data)
-                
                 items = []
-                # Parse items
                 for item in root.findall('.//item'):
                     title = item.find('title').text
                     link = item.find('link').text
-                    # Clean title (remove source suffix if possible, e.g. " - NewsSource")
                     if " - " in title:
                         title = title.rsplit(" - ", 1)[0]
                     items.append({"title": title, "link": link})
-                
                 return items
     except Exception as e:
         print(f"Error fetching RSS: {e}")
         return []
-
-def escape_latex(text):
-    if not text:
-        return ""
-    # aggressive whitelist: allow Hangul, English, Numbers, Space, and safe punctuation
-    # \uAC00-\uD7A3 : Hangul Syllables
-    # \u3131-\u318E : Hangul Compatibility Jamo
-    # a-zA-Z0-9 : Alphanumeric
-    # \s : Whitespace
-    # \.,\-\?! : Safe punctuation
-    
-    # First, simple replacements for common blockers
-    text = text.replace('"', "'").replace("\n", " ").replace("\\", " ")
-    
-    # Replace any character NOT in the whitelist with a SPACE
-    safe_pattern = re.compile(r'[^ \uAC00-\uD7A3\u3131-\u318Ea-zA-Z0-9\.,\-\?!\%\(\)]')
-    
-    # Use space instead of empty string
-    clean_text = safe_pattern.sub(' ', text)
-    
-    # Collapse multiple spaces into one
-    clean_text = re.sub(r'\s+', ' ', clean_text).strip()
-    
-    clean_text = clean_text.replace('%', r'\%')
-    
-    return clean_text
-
-def chunk_text(text, limit=26):
-    words = text.split()
-    lines = []
-    current_line = []
-    current_len = 0
-    
-    for word in words:
-        if current_len + len(word) + 1 > limit:
-            lines.append(" ".join(current_line))
-            current_line = [word]
-            current_len = len(word)
-        else:
-            current_line.append(word)
-            current_len += len(word) + 1
-            
-    if current_line:
-        lines.append(" ".join(current_line))
-        
-    return lines
-
-def update_block(token, block_id, news_item):
-    url = f"https://api.notion.com/v1/blocks/{block_id}"
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Notion-Version": "2022-06-28",
-        "Content-Type": "application/json"
-    }
-    
-    title = news_item['title']
-    link = news_item['link']
-    
-    # Escape title for LaTeX
-    safe_title = escape_latex(title)
-    
-    # Wrap text
-    lines = chunk_text(safe_title, 26)
-    
-    # Construct Lines for LaTeX
-    # Header
-    latex_lines = [r"\color{gray} \textsf{\scriptsize 오늘의 뉴스 📊}"]
-    
-    # content items
-    for line in lines:
-        latex_lines.append(fr"\color{{black}} \textsf{{\scriptsize {line}}}")
-        
-    # Join with \\ for substack
-    # Use substack for vertical alignment
-    inner_content = r" \\ ".join(latex_lines)
-    expression = f"\\substack{{ {inner_content} }}"
-    
-    payload = {
-        "paragraph": {
-            "rich_text": [
-                {
-                    "type": "equation",
-                    "equation": { 
-                        "expression": expression
-                    }
-                }
-            ]
-        }
-    }
-    
-    data_json = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data_json, headers=headers, method="PATCH")
-    
-    try:
-        with urllib.request.urlopen(req) as response:
-            if response.status == 200:
-                print("News block updated successfully.")
-            else:
-                print(f"Failed to update block: {response.status}")
-    except urllib.error.HTTPError as e:
-        print(f"HTTP Error: {e.code} - {e.read().decode('utf-8')}")
-    except Exception as e:
-        print(f"Error updating block: {e}")
 
 def get_children(token, block_id):
     url = f"https://api.notion.com/v1/blocks/{block_id}/children"
@@ -158,78 +50,156 @@ def get_children(token, block_id):
         print(f"Error fetching children: {e}")
     return []
 
-def find_target_block(token, page_id):
-    # 1. Find the Callout Block in the Page
+def update_block_content(token, block_id, payload):
+    url = f"https://api.notion.com/v1/blocks/{block_id}"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json"
+    }
+    data_json = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data_json, headers=headers, method="PATCH")
+    try:
+        with urllib.request.urlopen(req) as response:
+            if response.status == 200:
+                print(f"Block {block_id} updated.")
+                return True
+    except Exception as e:
+        print(f"Error updating block {block_id}: {e}")
+    return False
+
+def append_children(token, parent_id, children_list):
+    url = f"https://api.notion.com/v1/blocks/{parent_id}/children"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json"
+    }
+    payload = { "children": children_list }
+    data_json = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data_json, headers=headers, method="PATCH")
+    try:
+        with urllib.request.urlopen(req) as response:
+            if response.status == 200:
+                print(f"Appended children to {parent_id}.")
+                return True
+    except Exception as e:
+        print(f"Error appending children: {e}")
+    return False
+
+def find_news_blocks(token, page_id):
+    # 1. Find Callout
     print(f"Searching for Callout in Page {page_id}...")
     page_children = get_children(token, page_id)
-    
     callout_id = None
     for block in page_children:
         if block.get("type") == "callout":
-            # Optional: Check content if multiple callouts exist
-            # For now, assume the first callout is the dashboard header
             callout_id = block.get("id")
-            print(f"Found Callout: {callout_id}")
             break
-    
+            
     if not callout_id:
-        print("Callout block not found.")
-        return None
+        print("Callout not found.")
+        return None, None, None
 
-    # 2. Find the News Block in the Callout
-    print(f"Searching for News Block in Callout {callout_id}...")
+    # 2. Find Header Block ("오늘의 뉴스") inside Callout
+    print(f"Searching for News Header in Callout {callout_id}...")
     callout_children = get_children(token, callout_id)
     
-    for block in callout_children:
+    header_block_id = None
+    content_block_id = None
+    
+    for i, block in enumerate(callout_children):
         if block.get("type") == "paragraph":
-            # Check if it looks like the News block (contains "오늘의 뉴스" or just assume position)
-            # The structure has "Today's News" text usually.
-            # We look for "equation" with "오늘의 뉴스" inside
             rich_text = block.get("paragraph", {}).get("rich_text", [])
             for t in rich_text:
+                # Check for Equation with specific content or just "News"
                 if t.get("type") == "equation":
                     expr = t.get("equation", {}).get("expression", "")
                     if "오늘의 뉴스" in expr or "News" in expr:
-                        print(f"Found News Block: {block.get('id')}")
-                        return block.get("id")
-    
-    print("News block not found in Callout.")
-    return None
+                        header_block_id = block.get("id")
+                        # Check if next block exists
+                        if i + 1 < len(callout_children):
+                            content_block_id = callout_children[i+1].get("id")
+                        break
+        if header_block_id: break
+        
+    return callout_id, header_block_id, content_block_id
 
 def main():
     token = os.environ.get("NOTION_TOKEN")
     if not token:
-        print("Error: NOTION_TOKEN environment variable not set.")
+        print("Error: NOTION_TOKEN not set.")
         sys.exit(1)
         
-    # Main Page ID (from URL provided by user)
     page_id = "2f90d907-031e-80e8-928d-c7617241966f"
     
-    print("Finding target block...")
-    target_block_id = find_target_block(token, page_id)
-    
-    if not target_block_id:
-        # Fallback to hardcoded just in case
-        print("Using fallback ID...")
-        target_block_id = "2f90d907-031e-801b-8345-debfbf1d2dd3"
-    
-    print("Fetching news...")
+    # Fetch News
     news_items = fetch_economic_news()
-    
     if not news_items:
         print("No news found.")
         return
+    selected_news = random.choice(news_items[:5] if news_items else [])
+    
+    # Identify Blocks
+    callout_id, header_id, content_id = find_news_blocks(token, page_id)
+    
+    if not callout_id:
+        # Fallback if callout logic creates issues, but we need callout ID.
+        # Assuming manual ID for safety if search fails? 
+        # For now, if dynamic search fails, we can't proceed easily.
+        return
+
+    # 1. Update/Create Header
+    header_expression = r"\substack{ \color{gray} \textsf{\scriptsize 오늘의 뉴스 📊} }"
+    header_payload = {
+        "paragraph": {
+            "rich_text": [{
+                "type": "equation",
+                "equation": { "expression": header_expression }
+            }]
+        }
+    }
+    
+    if header_id:
+        update_block_content(token, header_id, header_payload)
+    else:
+        # Append Header
+        print("Header block not found. creating...")
+        append_children(token, callout_id, [{
+            "object": "block",
+            "type": "paragraph",
+            "paragraph": header_payload["paragraph"]
+        }])
+        # Re-fetch to get the new structure? Or just append content too.
+        # If we append header, we should append content right after.
         
-    # Pick a random one or the top one?
-    # Let's pick a random one from top 5 to keep it fresh but relevant
-    top_n = news_items[:5]
-    if not top_n: top_n = news_items
+    # 2. Update/Create Content
+    # Use Rich Text with Link
+    content_payload = {
+        "paragraph": {
+            "rich_text": [{
+                "type": "text",
+                "text": { 
+                    "content": selected_news['title'],
+                    "link": { "url": selected_news['link'] }
+                },
+                "annotations": { "color": "default", "code": False } 
+            }]
+        }
+    }
     
-    selected_news = random.choice(top_n)
-    print(f"Selected: {selected_news['title']}")
-    
-    print(f"Updating block {target_block_id}...")
-    update_block(token, target_block_id, selected_news)
+    if content_id:
+        # We assume the block after header is the content block.
+        # We overwrite it.
+        update_block_content(token, content_id, content_payload)
+    else:
+        # If header existed but content didn't, or both didn't exist
+        print("Content block not found. creating...")
+        append_children(token, callout_id, [{
+            "object": "block",
+            "type": "paragraph",
+            "paragraph": content_payload["paragraph"]
+        }])
 
 if __name__ == "__main__":
     main()
