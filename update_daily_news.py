@@ -119,14 +119,77 @@ def update_block(token, block_id, news_item):
     except Exception as e:
         print(f"Error updating block: {e}")
 
+def get_children(token, block_id):
+    url = f"https://api.notion.com/v1/blocks/{block_id}/children"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json"
+    }
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req) as response:
+            if response.status == 200:
+                data = json.loads(response.read().decode("utf-8"))
+                return data.get("results", [])
+    except Exception as e:
+        print(f"Error fetching children: {e}")
+    return []
+
+def find_target_block(token, page_id):
+    # 1. Find the Callout Block in the Page
+    print(f"Searching for Callout in Page {page_id}...")
+    page_children = get_children(token, page_id)
+    
+    callout_id = None
+    for block in page_children:
+        if block.get("type") == "callout":
+            # Optional: Check content if multiple callouts exist
+            # For now, assume the first callout is the dashboard header
+            callout_id = block.get("id")
+            print(f"Found Callout: {callout_id}")
+            break
+    
+    if not callout_id:
+        print("Callout block not found.")
+        return None
+
+    # 2. Find the News Block in the Callout
+    print(f"Searching for News Block in Callout {callout_id}...")
+    callout_children = get_children(token, callout_id)
+    
+    for block in callout_children:
+        if block.get("type") == "paragraph":
+            # Check if it looks like the News block (contains "오늘의 뉴스" or just assume position)
+            # The structure has "Today's News" text usually.
+            # We look for "equation" with "오늘의 뉴스" inside
+            rich_text = block.get("paragraph", {}).get("rich_text", [])
+            for t in rich_text:
+                if t.get("type") == "equation":
+                    expr = t.get("equation", {}).get("expression", "")
+                    if "오늘의 뉴스" in expr or "News" in expr:
+                        print(f"Found News Block: {block.get('id')}")
+                        return block.get("id")
+    
+    print("News block not found in Callout.")
+    return None
+
 def main():
     token = os.environ.get("NOTION_TOKEN")
     if not token:
         print("Error: NOTION_TOKEN environment variable not set.")
         sys.exit(1)
         
-    # Block ID of the detailed news line (found in callout_children.json)
-    target_block_id = "2f90d907-031e-801b-8345-debfbf1d2dd3"
+    # Main Page ID (from URL provided by user)
+    page_id = "2f90d907-031e-80e8-928d-c7617241966f"
+    
+    print("Finding target block...")
+    target_block_id = find_target_block(token, page_id)
+    
+    if not target_block_id:
+        # Fallback to hardcoded just in case
+        print("Using fallback ID...")
+        target_block_id = "2f90d907-031e-801b-8345-debfbf1d2dd3"
     
     print("Fetching news...")
     news_items = fetch_economic_news()
