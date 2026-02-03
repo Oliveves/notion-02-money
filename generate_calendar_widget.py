@@ -168,7 +168,7 @@ def generate_interactive_html(calendar_data):
                 --hover-bg: #f7f7f5;
                 --today-bg: #f5f5f5;
                 --today-text: #616161;
-                /* Korean Market Standard + Notion \color{red} match (#FF0000) */
+                /* Korean Market Standard + Notion \color{{red}} match (#FF0000) */
                 --profit-color: #FF0000; 
                 --loss-color: #2eaadc;
             }}
