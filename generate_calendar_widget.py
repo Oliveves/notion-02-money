@@ -58,14 +58,27 @@ def fetch_db_data(token, db_id):
 def get_number_value(prop):
     if not prop: return None
     p_type = prop.get("type")
+    
+    val = None
     if p_type == "number":
-        return prop.get("number")
+        val = prop.get("number")
     elif p_type == "formula":
-        # Formula can result in number, string, boolean, or date
         f_val = prop.get("formula", {})
-        if f_val.get("type") == "number":
-            return f_val.get("number")
-    return None
+        f_type = f_val.get("type")
+        if f_type == "number":
+            val = f_val.get("number")
+        elif f_type == "string":
+            # Try to parse string e.g. "1,000", "-500"
+            s_val = f_val.get("string")
+            if s_val:
+                try:
+                    # Remove commas and currency symbols if present (simple cleanup)
+                    clean_s = s_val.replace(",", "").replace("₩", "").replace("$", "").strip()
+                    val = float(clean_s)
+                except:
+                    val = None
+                    
+    return val
 
 def parse_data(results):
     calendar_data = {}
