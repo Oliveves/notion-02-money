@@ -168,8 +168,9 @@ def generate_interactive_html(calendar_data):
                 --hover-bg: #f7f7f5;
                 --today-bg: #f5f5f5;
                 --today-text: #616161;
-                --loss-color: #e03e3e;
-                --profit-color: #2eaadc;
+                /* Korean Market Standard: Red = Profit, Blue = Loss */
+                --profit-color: #e03e3e; 
+                --loss-color: #2eaadc;
             }}
             body {{
                 font-family: "Courier New", Courier, monospace;
@@ -240,11 +241,11 @@ def generate_interactive_html(calendar_data):
                 position: relative;
                 cursor: pointer;
                 transition: background 0.2s;
+                /* Center content (Day Number) */
                 display: flex;
-                flex-direction: column; /* Stack content separately */
-                justify-content: space-between; /* Space out number and content */
-                align-items: flex-start; /* Align left */
-                padding: 4px;
+                justify-content: center;
+                align-items: center;
+                padding: 0; 
                 font-size: 0.85em;
                 font-weight: bold;
                 overflow: hidden;
@@ -265,6 +266,12 @@ def generate_interactive_html(calendar_data):
                 background: var(--today-bg);
                 color: var(--today-text);
                 box-shadow: 0 0 0 1px var(--today-text);
+            }}
+            
+            /* Entry indicator dot (optional, or just use bold font for day) */
+            .has-entry {{
+                font-weight: 900;
+                /* text-decoration: underline; */ 
             }}
 
             .tooltip {{
@@ -287,6 +294,7 @@ def generate_interactive_html(calendar_data):
                 font-weight: normal;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
                 white-space: normal;
+                line-height: 1.4;
             }}
             
             .tooltip::after {{
@@ -305,37 +313,23 @@ def generate_interactive_html(calendar_data):
                 opacity: 1;
             }}
             
-            .entry-item {{ margin-bottom: 4px; }}
+            .entry-item {{ margin-bottom: 2px; }}
             .entry-item:last-child {{ margin-bottom: 0; }}
 
-            .has-entry .day-number {{
-                /* Removed border-bottom as we show content now */
-                border-bottom: none; 
-            }}
             .day-number {{ 
                 pointer-events: none; 
-                width: 100%;
-                text-align: right;
-                font-size: 0.8em;
-                margin-bottom: 2px;
-            }}
-            
-            .cell-content {{
-                display: flex;
-                flex-direction: column;
-                gap: 1px;
-                width: 100%;
-                overflow: hidden;
+                font-size: 1.0em;
             }}
             
             .pl-text {{
-                font-size: 0.7em;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                font-weight: bold;
             }}
-            .loss {{ color: var(--loss-color); }}
-            .profit {{ color: var(--profit-color); }}
+            /* In tooltip (dark background), lighter colors might be better, 
+               but user asked for Red/Blue standard. 
+               Red on Dark Grey (#333) might be low contrast. 
+               Let's brighten them slightly or use standard. */
+            .loss {{ color: #4fc3f7; }} /* Light Blue for dark bg */
+            .profit {{ color: #ff8a80; }} /* Light Red/Pink for dark bg */
 
             .nav-container {{
                 display: flex;
@@ -366,6 +360,11 @@ def generate_interactive_html(calendar_data):
                 font-weight: bold;
                 font-size: 1.1em;
             }}
+            
+            /* Footer Colors (White BG) - Use Standard */
+            .summary-value.loss {{ color: var(--loss-color); }}
+            .summary-value.profit {{ color: var(--profit-color); }}
+            
         </style>
     </head>
     <body>
@@ -506,7 +505,8 @@ def generate_interactive_html(calendar_data):
                         cell.classList.add('today');
                     }}
                     
-                    // Add day number first (top right aligned via CSS)
+                    // Add day number
+                    // Centered for clean look
                     const numSpan = document.createElement('span');
                     numSpan.className = 'day-number';
                     numSpan.innerText = d;
@@ -517,36 +517,31 @@ def generate_interactive_html(calendar_data):
                         
                         // Create Tooltip
                         let tooltipContent = '';
-                        // cell content container
-                        const contentDiv = document.createElement('div');
-                        contentDiv.className = 'cell-content';
                         
                         entries.forEach(e => {{
-                            tooltipContent += `<div class="entry-item">${{e.display}}</div>`;
+                            // Logic: ItemName (+Amount)
+                            let amountStr = '';
+                            let colorClass = '';
                             
-                            // Add P&L to cell if exists
                             if (e.loss > 0) {{
-                                const lossEl = document.createElement('div');
-                                lossEl.className = 'pl-text loss';
-                                lossEl.innerText = `-${{e.loss.toLocaleString()}}`;
-                                contentDiv.appendChild(lossEl);
+                                amountStr = `(-${{e.loss.toLocaleString()}})`;
+                                colorClass = 'loss';
+                            }} else if (e.profit > 0) {{
+                                amountStr = `(+${{e.profit.toLocaleString()}})`;
+                                colorClass = 'profit';
                             }}
-                            if (e.profit > 0) {{
-                                const profitEl = document.createElement('div');
-                                profitEl.className = 'pl-text profit';
-                                profitEl.innerText = `+${{e.profit.toLocaleString()}}`;
-                                contentDiv.appendChild(profitEl);
-                            }}
+                            
+                            // e.title + amountStr
+                            // If neither, just title
+                            
+                            const displayLine = amountStr ? `${{e.title}} ${{amountStr}}` : e.title;
+                            tooltipContent += `<div class="entry-item ${{colorClass}}">${{displayLine}}</div>`;
                         }});
-                        
-                        cell.appendChild(contentDiv);
                         
                         const tooltip = document.createElement('div');
                         tooltip.className = 'tooltip';
                         tooltip.innerHTML = tooltipContent;
                         cell.appendChild(tooltip);
-                    }} else {{
-                         // Optional: empty tooltip or nothing
                     }}
                     
                     grid.appendChild(cell);
