@@ -168,8 +168,8 @@ def generate_interactive_html(calendar_data):
                 --hover-bg: #f7f7f5;
                 --today-bg: #f5f5f5;
                 --today-text: #616161;
-                /* Korean Market Standard: Red = Profit, Blue = Loss */
-                --profit-color: #e03e3e; 
+                /* Korean Market Standard + Notion \color{red} match (#FF0000) */
+                --profit-color: #FF0000; 
                 --loss-color: #2eaadc;
             }}
             body {{
@@ -248,7 +248,8 @@ def generate_interactive_html(calendar_data):
                 padding: 0; 
                 font-size: 0.85em;
                 font-weight: bold;
-                overflow: hidden;
+                /* Remove overflow: hidden so tooltip can show */
+                overflow: visible;
             }}
             
             .day-cell:hover {{
@@ -268,11 +269,11 @@ def generate_interactive_html(calendar_data):
                 box-shadow: 0 0 0 1px var(--today-text);
             }}
             
-            /* Entry indicator dot (optional, or just use bold font for day) */
-            .has-entry {{
-                font-weight: 900;
-                /* text-decoration: underline; */ 
-            }}
+            /* Entry indicator: Grey underline on the number */
+            .has-entry .day-number {
+                border-bottom: 2px solid #ccc;
+                padding-bottom: 0px;
+            }
 
             .tooltip {{
                 visibility: hidden;
