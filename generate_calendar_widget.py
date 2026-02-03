@@ -55,6 +55,18 @@ def fetch_db_data(token, db_id):
         
     return results
 
+def get_number_value(prop):
+    if not prop: return None
+    p_type = prop.get("type")
+    if p_type == "number":
+        return prop.get("number")
+    elif p_type == "formula":
+        # Formula can result in number, string, boolean, or date
+        f_val = prop.get("formula", {})
+        if f_val.get("type") == "number":
+            return f_val.get("number")
+    return None
+
 def parse_data(results):
     calendar_data = {}
     
@@ -100,7 +112,7 @@ def parse_data(results):
         p_keys = ["판매수익", "Sale Profit", "수익", "Profit", "손익", "실현손익"]
         for k in p_keys:
             if k in props:
-                p_val = props[k].get("number")
+                p_val = get_number_value(props[k])
                 if p_val is not None:
                     profit = p_val
                     break
@@ -109,7 +121,7 @@ def parse_data(results):
         l_keys = ["판매손실", "Sale Loss", "손실", "Loss", "손실액", "손실금액"]
         for k in l_keys:
             if k in props:
-                l_val = props[k].get("number")
+                l_val = get_number_value(props[k])
                 if l_val is not None:
                     loss = l_val
                     break
