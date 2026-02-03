@@ -270,10 +270,10 @@ def generate_interactive_html(calendar_data):
             }}
             
             /* Entry indicator: Grey underline on the number */
-            .has-entry .day-number {
+            .has-entry .day-number {{
                 border-bottom: 2px solid #ccc;
                 padding-bottom: 0px;
-            }
+            }}
 
             .tooltip {{
                 visibility: hidden;
