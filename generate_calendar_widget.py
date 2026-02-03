@@ -139,7 +139,9 @@ def parse_data(results):
             "id": page_id,
             "title": title,
             "emoji": emoji,
-            "display": display_str
+            "display": display_str,
+            "profit": profit,
+            "loss": loss
         })
         
     return calendar_data
@@ -166,6 +168,8 @@ def generate_interactive_html(calendar_data):
                 --hover-bg: #f7f7f5;
                 --today-bg: #f5f5f5;
                 --today-text: #616161;
+                --loss-color: #e03e3e;
+                --profit-color: #2eaadc;
             }}
             body {{
                 font-family: "Courier New", Courier, monospace;
@@ -218,6 +222,7 @@ def generate_interactive_html(calendar_data):
                 gap: 8px;
                 width: 100%;
                 max-width: 600px;
+                margin-bottom: 20px;
             }}
             
             .day-header {{
@@ -236,10 +241,13 @@ def generate_interactive_html(calendar_data):
                 cursor: pointer;
                 transition: background 0.2s;
                 display: flex;
-                justify-content: center;
-                align-items: center;
+                flex-direction: column; /* Stack content separately */
+                justify-content: space-between; /* Space out number and content */
+                align-items: flex-start; /* Align left */
+                padding: 4px;
                 font-size: 0.85em;
                 font-weight: bold;
+                overflow: hidden;
             }}
             
             .day-cell:hover {{
@@ -301,17 +309,62 @@ def generate_interactive_html(calendar_data):
             .entry-item:last-child {{ margin-bottom: 0; }}
 
             .has-entry .day-number {{
-                border-bottom: 3px solid #bdbdbd;
-                padding-bottom: 2px;
-                display: inline-block;
-                line-height: 1.2;
+                /* Removed border-bottom as we show content now */
+                border-bottom: none; 
             }}
-            .day-number {{ pointer-events: none; }}
+            .day-number {{ 
+                pointer-events: none; 
+                width: 100%;
+                text-align: right;
+                font-size: 0.8em;
+                margin-bottom: 2px;
+            }}
+            
+            .cell-content {{
+                display: flex;
+                flex-direction: column;
+                gap: 1px;
+                width: 100%;
+                overflow: hidden;
+            }}
+            
+            .pl-text {{
+                font-size: 0.7em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }}
+            .loss {{ color: var(--loss-color); }}
+            .profit {{ color: var(--profit-color); }}
 
             .nav-container {{
                 display: flex;
                 align-items: center;
                 gap: 2px;
+            }}
+
+            .summary-footer {{
+                width: 100%;
+                max-width: 600px;
+                border-top: 1px solid var(--grid-border);
+                padding-top: 12px;
+                display: flex;
+                justify-content: space-between;
+                font-size: 0.85em;
+                color: #555;
+            }}
+            .summary-item {{
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }}
+            .summary-label {{
+                font-size: 0.9em;
+                color: #999;
+            }}
+            .summary-value {{
+                font-weight: bold;
+                font-size: 1.1em;
             }}
         </style>
     </head>
@@ -328,12 +381,75 @@ def generate_interactive_html(calendar_data):
             <!-- Headers and Days inserted by JS -->
         </div>
 
+        <div class="summary-footer">
+            <div class="summary-item">
+                <div class="summary-label">Monthly Return</div>
+                <div class="summary-value" id="monthReturn">-</div>
+            </div>
+            <div class="summary-item" style="text-align: right;">
+                <div class="summary-label">Yearly Return</div>
+                <div class="summary-value" id="yearReturn">-</div>
+            </div>
+        </div>
+
         <script>
             const eventData = {data_json};
             let currentDate = new Date(); // Defaults to today on client side
 
             const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+            function formatNumber(num) {{
+                if (num === 0) return "0";
+                const sign = num > 0 ? "+" : "-";
+                return `${{sign}}${{Math.abs(num).toLocaleString()}}`;
+            }}
+            
+            function updateSummary(year, month) {{
+                // Calculate Monthly (YYYY-MM)
+                let mProfit = 0;
+                let mLoss = 0;
+                
+                // Calculate Yearly (YYYY)
+                let yProfit = 0;
+                let yLoss = 0;
+                
+                // Iterate all event keys
+                for (const dateKey in eventData) {{
+                    // dateKey is "YYYY-MM-DD"
+                    const parts = dateKey.split("-");
+                    const dYear = parseInt(parts[0]);
+                    const dMonth = parseInt(parts[1]) - 1; // 0-indexed
+                    
+                    const entries = eventData[dateKey];
+                    
+                    // Yearly Accumulation
+                    if (dYear === year) {{
+                        entries.forEach(e => {{
+                            yProfit += (e.profit || 0);
+                            yLoss += (e.loss || 0);
+                        }});
+                        
+                        // Monthly Accumulation
+                        if (dMonth === month) {{
+                            entries.forEach(e => {{
+                                mProfit += (e.profit || 0);
+                                mLoss += (e.loss || 0);
+                            }});
+                        }}
+                    }}
+                }}
+                
+                const mNet = mProfit - mLoss;
+                const mEl = document.getElementById('monthReturn');
+                mEl.innerText = formatNumber(mNet);
+                mEl.className = 'summary-value ' + (mNet > 0 ? 'profit' : (mNet < 0 ? 'loss' : ''));
+                
+                const yNet = yProfit - yLoss;
+                const yEl = document.getElementById('yearReturn');
+                yEl.innerText = formatNumber(yNet);
+                yEl.className = 'summary-value ' + (yNet > 0 ? 'profit' : (yNet < 0 ? 'loss' : ''));
+            }}
 
             function renderCalendar() {{
                 const year = currentDate.getFullYear();
@@ -390,37 +506,54 @@ def generate_interactive_html(calendar_data):
                         cell.classList.add('today');
                     }}
                     
+                    // Add day number first (top right aligned via CSS)
+                    const numSpan = document.createElement('span');
+                    numSpan.className = 'day-number';
+                    numSpan.innerText = d;
+                    cell.appendChild(numSpan);
+                    
                     if (entries.length > 0) {{
                         cell.classList.add('has-entry');
                         
                         // Create Tooltip
                         let tooltipContent = '';
+                        // cell content container
+                        const contentDiv = document.createElement('div');
+                        contentDiv.className = 'cell-content';
+                        
                         entries.forEach(e => {{
                             tooltipContent += `<div class="entry-item">${{e.display}}</div>`;
+                            
+                            // Add P&L to cell if exists
+                            if (e.loss > 0) {{
+                                const lossEl = document.createElement('div');
+                                lossEl.className = 'pl-text loss';
+                                lossEl.innerText = `-${{e.loss.toLocaleString()}}`;
+                                contentDiv.appendChild(lossEl);
+                            }}
+                            if (e.profit > 0) {{
+                                const profitEl = document.createElement('div');
+                                profitEl.className = 'pl-text profit';
+                                profitEl.innerText = `+${{e.profit.toLocaleString()}}`;
+                                contentDiv.appendChild(profitEl);
+                            }}
                         }});
+                        
+                        cell.appendChild(contentDiv);
                         
                         const tooltip = document.createElement('div');
                         tooltip.className = 'tooltip';
                         tooltip.innerHTML = tooltipContent;
                         cell.appendChild(tooltip);
                     }} else {{
-                        // optional empty tooltip "No Info" or none
-                        // original python code added "No Info" except for padding days
-                        // let's add it for consistency if desired, or skip it.
-                        // User prompt didn't specify, but implementation plan said "No Info".
-                         const tooltip = document.createElement('div');
-                         tooltip.className = 'tooltip';
-                         tooltip.innerText = 'No Info';
-                         cell.appendChild(tooltip);
+                         // Optional: empty tooltip or nothing
                     }}
-                    
-                    const numSpan = document.createElement('span');
-                    numSpan.className = 'day-number';
-                    numSpan.innerText = d;
-                    cell.appendChild(numSpan);
                     
                     grid.appendChild(cell);
                 }}
+                
+                // Update Summary
+                updateSummary(year, month);
             }}
 
             // Event Listeners
