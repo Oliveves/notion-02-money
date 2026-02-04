@@ -73,8 +73,18 @@ def get_number_value(prop):
             if s_val:
                 try:
                     # Remove commas and currency symbols if present (simple cleanup)
-                    clean_s = s_val.replace(",", "").replace("₩", "").replace("$", "").strip()
-                    val = float(clean_s)
+                    # Handle multiple types of minus signs
+                    clean_s = s_val.replace(",", "").replace("₩", "").replace("$", "")
+                    clean_s = clean_s.replace("−", "-").replace("–", "-").replace("—", "-") # Handle unicode dashes
+                    clean_s = clean_s.strip()
+                    
+                    # Regex to find the first valid number group (integer or float, positive or negative)
+                    import re
+                    match = re.search(r'[-+]?\d*\.?\d+', clean_s)
+                    if match:
+                        val = float(match.group())
+                    else:
+                        val = float(clean_s) # Fallback to direct cast
                 except:
                     val = None
     elif p_type == "rollup":
