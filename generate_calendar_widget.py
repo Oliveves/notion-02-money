@@ -77,6 +77,17 @@ def get_number_value(prop):
                     val = float(clean_s)
                 except:
                     val = None
+    elif p_type == "rollup":
+        r_val = prop.get("rollup", {})
+        r_type = r_val.get("type")
+        if r_type == "number":
+            val = r_val.get("number")
+        elif r_type == "array":
+            # Sum logic or just take first? Usually rollups for amount are sums.
+            # But the API usually returns the calculated 'number' if the rollup is a sum/avg.
+            # If strictly array, maybe we sum it?
+            # Let's trust 'number' if present, otherwise try to sum array numbers if simple.
+            pass
                     
     return val
 
@@ -117,20 +128,25 @@ def parse_data(results):
         title = "".join([t.get("plain_text", "") for t in title_list])
         if not title: title = "Untitled"
         
+        if len(calendar_data) == 0 and len(calendar_data.values()) == 0:
+             # Debug: Print properties of the first valid item found to help with debugging
+             print(f"Debug: First Item Props: {list(props.keys())}")
+
         # P&L
         profit = 0
         loss = 0
         
-        # Try to find Profit
-        p_keys = ["판매수익", "Sale Profit", "수익", "Profit", "손익", "실현손익"]
+        # Try to find Profit (Amount or P&L)
+        p_keys = ["판매수익", "Sale Profit", "수익", "Profit", "손익", "실현손익", "평가손익", "매매손익", "P&L", "PnL", "Amount", "금액"]
         for k in p_keys:
             if k in props:
                 p_val = get_number_value(props[k])
                 if p_val is not None:
+                    # If we found a value, assume this is the main P&L column. 
                     profit = p_val
                     break
                     
-        # Try to find Loss
+        # Try to find Loss (Explicit Loss column)
         l_keys = ["판매손실", "Sale Loss", "손실", "Loss", "손실액", "손실금액"]
         for k in l_keys:
             if k in props:
@@ -596,13 +612,49 @@ def generate_interactive_html(calendar_data):
     """
     return html
 
+def find_trading_db(token, page_id):
+    print(f"Scanning Page {page_id} for Trading Journal DB...")
+    url = f"https://api.notion.com/v1/blocks/{page_id}/children"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json"
+    }
+    
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req) as response:
+            if response.status == 200:
+                data = json.loads(response.read().decode("utf-8"))
+                for block in data.get("results", []):
+                    if block.get("type") == "child_database":
+                        title = block.get("child_database", {}).get("title", "")
+                        # Check for "매매일지" or "Trading"
+                        if "매매" in title or "Trading" in title:
+                            print(f"Found Database: {title} ({block.get('id')})")
+                            return block.get("id")
+    except Exception as e:
+        print(f"Error scanning for DB: {e}")
+    return None
+
 def main():
     token = os.environ.get("NOTION_TOKEN")
+    page_id = os.environ.get("NOTION_PAGE_ID")
+    
     if not token:
         print("Error: NOTION_TOKEN environment variable not set.")
         sys.exit(1)
         
-    db_id = "2f90d907-031e-805c-be36-ebd342683bfa"
+    db_id = "2f90d907-031e-805c-be36-ebd342683bfa" # Fallback
+    
+    if page_id:
+        found_id = find_trading_db(token, page_id)
+        if found_id:
+            db_id = found_id
+        else:
+            print("Could not find trading database in page. Using fallback ID.")
+    else:
+        print("Warning: NOTION_PAGE_ID not set. Using fallback DB ID.")
     
     print(f"Fetching Trading Journal data...")
     raw_data = fetch_db_data(token, db_id)

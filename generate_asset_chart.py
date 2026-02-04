@@ -246,13 +246,49 @@ def generate_html(assets):
     """
     return html
 
+def find_asset_db(token, page_id):
+    print(f"Scanning Page {page_id} for Asset DB...")
+    url = f"https://api.notion.com/v1/blocks/{page_id}/children"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json"
+    }
+    
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req) as response:
+            if response.status == 200:
+                data = json.loads(response.read().decode("utf-8"))
+                for block in data.get("results", []):
+                    if block.get("type") == "child_database":
+                        title = block.get("child_database", {}).get("title", "")
+                        # Check for "자산" or "Asset"
+                        if "자산" in title or "Asset" in title:
+                            print(f"Found Database: {title} ({block.get('id')})")
+                            return block.get("id")
+    except Exception as e:
+        print(f"Error scanning for DB: {e}")
+    return None
+
 def main():
     token = os.environ.get("NOTION_TOKEN")
+    page_id = os.environ.get("NOTION_PAGE_ID")
+    
     if not token:
         print("Error: NOTION_TOKEN environment variable not set.")
         sys.exit(1)
     
-    db_id = "2f90d907-031e-8105-8ed9-d2dbd48595ce" # My Assets
+    db_id = "2f90d907-031e-8105-8ed9-d2dbd48595ce" # My Assets Fallback
+    
+    if page_id:
+        found_id = find_asset_db(token, page_id)
+        if found_id:
+            db_id = found_id
+        else:
+            print("Could not find Asset database in page. Using fallback ID.")
+    else:
+        print("Warning: NOTION_PAGE_ID not set. Using fallback DB ID.")
     
     print("Fetching assets...")
     assets = fetch_assets(token, db_id)

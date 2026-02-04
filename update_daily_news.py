@@ -92,13 +92,20 @@ def find_news_blocks(token, page_id):
     print(f"Searching for Callout in Page {page_id}...")
     page_children = get_children(token, page_id)
     callout_id = None
+    
+    print(f"Debug: Page has {len(page_children)} children.")
     for block in page_children:
-        if block.get("type") == "callout":
+        b_type = block.get("type")
+        # print(f"Debug: Found block type: {b_type} ({block.get('id')})") # Uncomment if needed
+        if b_type == "callout":
             callout_id = block.get("id")
+            print(f"Found Callout Block: {callout_id}")
             break
             
     if not callout_id:
-        print("Callout not found.")
+        print("Callout not found. Listing all block types found:")
+        for block in page_children:
+            print(f"- {block.get('type')} ({block.get('id')})")
         return None, None, None
 
     # 2. Find Header Block ("오늘의 뉴스") inside Callout
@@ -127,11 +134,15 @@ def find_news_blocks(token, page_id):
 
 def main():
     token = os.environ.get("NOTION_TOKEN")
+    page_id = os.environ.get("NOTION_PAGE_ID")
+
     if not token:
         print("Error: NOTION_TOKEN not set.")
         sys.exit(1)
         
-    page_id = "2f90d907-031e-80e8-928d-c7617241966f"
+    if not page_id:
+        print("Error: NOTION_PAGE_ID not set.")
+        sys.exit(1)
     
     # Fetch News
     news_items = fetch_economic_news()

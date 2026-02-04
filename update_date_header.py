@@ -120,12 +120,18 @@ def find_target_block(token, page_id):
 
 def main():
     token = os.environ.get("NOTION_TOKEN")
+    page_id = os.environ.get("NOTION_PAGE_ID")
+    
     if not token:
         print("Error: NOTION_TOKEN environment variable not set.")
         sys.exit(1)
+
+    if not page_id:
+        print("Error: NOTION_PAGE_ID environment variable not set.")
+        sys.exit(1)
         
     # Main Page ID
-    page_id = "2f90d907-031e-80e8-928d-c7617241966f"
+    # page_id = "2f90d907-031e-80e8-928d-c7617241966f"
     
     print("Finding target block...")
     target_block_id = find_target_block(token, page_id)
