@@ -147,7 +147,7 @@ def parse_data(results):
         loss = 0
         
         # Try to find Profit (Amount or P&L)
-        p_keys = ["판매수익", "Sale Profit", "수익", "Profit", "손익", "실현손익", "평가손익", "매매손익", "P&L", "PnL", "Amount", "금액"]
+        p_keys = ["판매손익", "판매수익", "Sale Profit", "수익", "Profit", "손익", "실현손익", "평가손익", "매매손익", "P&L", "PnL", "Amount", "금액"]
         for k in p_keys:
             if k in props:
                 p_val = get_number_value(props[k])

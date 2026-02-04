@@ -144,8 +144,11 @@ def find_news_blocks(token, page_id):
                     # Look for content INSIDE this header callout
                     inner_children = get_children(token, header_block_id)
                     if inner_children:
-                        # Assume first child is content. Logic can be improved if needed.
-                        content_block_id = inner_children[0].get("id") 
+                        # Find the first paragraph block to update
+                        for child in inner_children:
+                            if child.get("type") == "paragraph":
+                                content_block_id = child.get("id")
+                                break 
                     break
                     
         if header_block_id: break
