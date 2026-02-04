@@ -82,10 +82,11 @@ def append_children(token, parent_id, children_list):
         with urllib.request.urlopen(req) as response:
             if response.status == 200:
                 print(f"Appended children to {parent_id}.")
-                return True
+                # Return the response so we can get IDs of created blocks
+                return json.loads(response.read().decode("utf-8"))
     except Exception as e:
         print(f"Error appending children: {e}")
-    return False
+    return None
 
 def find_news_blocks(token, page_id):
     # 1. Find Callout
@@ -182,28 +183,15 @@ def main():
         return
 
     # 1. Update/Create Header
-    # Logic: If header is a container (Callout), we DO NOT update its text, we just use it as parent.
-    # If header is paragraph, we update it to ensure styling.
-    
     header_expression = r"\substack{ \color{gray} \textsf{\scriptsize 오늘의 뉴스 📊} }"
-    header_payload = {
-        "paragraph": {
-            "rich_text": [{
-                "type": "equation",
-                "equation": { "expression": header_expression }
-            }]
-        }
-    }
+    
+    parent_for_content = callout_id # Default fallback
     
     if header_id:
         # Update Header Text (to fix stale dates/titles)
         # We need to know the type to send correct payload
-        # Since we don't have the type stored explicitly from find_news_blocks easily without re-fetching or passing it,
-        # We can infer or just try to update based on header_is_container flag.
         
         target_type = "callout" if header_is_container else "paragraph"
-        
-        # specific payload for the type
         final_payload = {
             target_type: {
                 "rich_text": [{
@@ -218,16 +206,35 @@ def main():
             
         parent_for_content = header_id if header_is_container else callout_id
     else:
-        # Append Header (Paragraph style default)
-        print("Header block not found. creating...")
-        append_children(token, callout_id, [{
-            "object": "block",
-            "type": "paragraph",
-            "paragraph": header_payload["paragraph"]
-        }])
-        # Note: If we just created it, we don't have its ID to be parent. 
-        # Content will be appended to callout_id as sibling.
+        # Create NEW Header
+        # User requested Nested Callout structure
+        print("Header block not found. Creating new Inner Callout Header...")
         
+        new_header_payload = {
+            "object": "block",
+            "type": "callout",
+            "callout": {
+                "rich_text": [{
+                    "type": "equation",
+                    "equation": { "expression": header_expression }
+                }],
+                "icon": { "emoji": "📰" },
+                "color": "gray_background"
+            }
+        }
+        
+        # Append nested callout
+        resp = append_children(token, callout_id, [new_header_payload])
+        
+        if resp and "results" in resp and len(resp["results"]) > 0:
+            new_block = resp["results"][0]
+            new_header_id = new_block.get("id")
+            print(f"Created new header callout: {new_header_id}")
+            parent_for_content = new_header_id 
+        else:
+            print("Failed to create header? Fallback to callout parent.")
+            parent_for_content = callout_id
+
     # 2. Update/Create Content
     content_payload = {
         "paragraph": {
