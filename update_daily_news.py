@@ -195,16 +195,28 @@ def main():
         }
     }
     
-    parent_for_content = callout_id # Default parent for content
-    
     if header_id:
-        if not header_is_container:
-            # Update paragraph header
-            update_block_content(token, header_id, header_payload)
-            parent_for_content = callout_id # Sibling
-        else:
-            print("Header is a container. Skipping header text update.")
-            parent_for_content = header_id # Child
+        # Update Header Text (to fix stale dates/titles)
+        # We need to know the type to send correct payload
+        # Since we don't have the type stored explicitly from find_news_blocks easily without re-fetching or passing it,
+        # We can infer or just try to update based on header_is_container flag.
+        
+        target_type = "callout" if header_is_container else "paragraph"
+        
+        # specific payload for the type
+        final_payload = {
+            target_type: {
+                "rich_text": [{
+                    "type": "equation",
+                    "equation": { "expression": header_expression }
+                }]
+            }
+        }
+        
+        print(f"Updating Header ({target_type})...")
+        update_block_content(token, header_id, final_payload)
+            
+        parent_for_content = header_id if header_is_container else callout_id
     else:
         # Append Header (Paragraph style default)
         print("Header block not found. creating...")
