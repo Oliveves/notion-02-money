@@ -93,88 +93,23 @@ def find_news_blocks(token, page_id):
     page_children = get_children(token, page_id)
     callout_id = None
     
-    print(f"Debug: Page has {len(page_children)} children.")
-    
-    # Recursive search function
+    # Recursive search function to find the OUTER callout
     def find_target_blocks_recursive(blocks, depth=0):
-        if depth > 5: return None, None # Increased depth limit
-        
-        found_callout = None
-        found_header = None
-        
+        if depth > 5: return None
         for block in blocks:
-            b_type = block.get("type")
-            b_id = block.get("id")
-            
-            # Check if this block IS the header ("오늘의 뉴스")
-            # Usually in paragraph or equation
-            content_text = ""
-            if b_type == "paragraph":
-                rich_text = block.get("paragraph", {}).get("rich_text", [])
-                for t in rich_text:
-                    content_text += t.get("plain_text", "") + t.get("equation", {}).get("expression", "")
-            
-            if "오늘의 뉴스" in content_text or "News" in content_text:
-                 print(f"Found Header Block by Text: {b_id}")
-                 found_header = b_id
-                 # If we found header, the parent might be the container we want, 
-                 # OR we just return this header ID to update IT, and the next block for content.
-                 # But we need to return callout_id (container) to append if needed?
-                 # Actually main() uses header_id to update content.
-            
-            if b_type == "callout":
-                found_callout = b_id
-                
-            # If we found both, great, but header is most important for updating existing.
-            if found_header:
-                return found_callout, found_header # Return what we have
-
-            # Check containers (column_list -> column, callout content, toggle)
-            if float(depth) < 5 and block.get("has_children"):
-                children = get_children(token, b_id)
-                c_callout, c_header = find_target_blocks_recursive(children, depth + 1)
-                
-                # If child found something, bubble it up.
-                # Prioritize child's discovery
-                if c_header: 
-                    return (c_callout if c_callout else found_callout), c_header
-                if c_callout and not found_callout:
-                    found_callout = c_callout
-        
-        return found_callout, found_header
-
-    callout_id, header_id = find_target_blocks_recursive(page_children)
-    
-    # Fallback: If no callout found with header but we need one, just take the FIRST callout found on the page.
-    if not callout_id:
-        print("Specific News Callout not found. Searching for ANY callout...")
-        for block in page_children:
             if block.get("type") == "callout":
-                callout_id = block.get("id")
-                print(f"Fallback Callout found: {callout_id}")
-                break
+                return block.get("id")
+            if block.get("has_children"):
+                children = get_children(token, block.get("id"))
+                found = find_target_blocks_recursive(children, depth + 1)
+                if found: return found
+        return None
+
+    callout_id = find_target_blocks_recursive(page_children)
     
-    # If header found, we can deduce content_id comes after it?
-    # The original logic expected callout -> header -> content.
-    # If we found header but it's deep, we need its sibling.
-    # This is getting complex. 
-    # Simplified strategy: If header_id matches, we need to find its parent to find its next sibling?
-    # Notion API doesn't give parent easily or siblings without re-fetching parent children.
-    # BUT, if we returned the LIST of blocks in recursive search, we could find the index.
-    
-    # Retrying simple approach: Just update the header if found. 
-    # If content needs update, we need content_id.
-    # Let's assume if we found header_id, we can try to append content to its parent? No.
-    
-    # If header is found, let's just use it.
-    # For content, if we can't find it easily, maybe we just append to the SAME container as header?
-    
-    content_id = None # We'll skip finding content_block specific ID for now if we use text search
-    # If we found callout but no header, we return (callout, None, None) which leads to append.
-    # If we found header, we return (None, header, None) -> Update header. 
-    # But where does content go?
-    
-    return callout_id, header_id, None
+    if not callout_id:
+        print("No Callout found in page.")
+        return None, None, None, False
 
     # 2. Find Header Block ("오늘의 뉴스") inside Callout
     print(f"Searching for News Header in Callout {callout_id}...")
@@ -182,23 +117,40 @@ def find_news_blocks(token, page_id):
     
     header_block_id = None
     content_block_id = None
+    header_is_container = False # Flag: if True, header is a Callout containing the news
     
     for i, block in enumerate(callout_children):
+        # Case A: Header is a Paragraph (Old style)
         if block.get("type") == "paragraph":
             rich_text = block.get("paragraph", {}).get("rich_text", [])
             for t in rich_text:
-                # Check for Equation with specific content or just "News"
-                if t.get("type") == "equation":
-                    expr = t.get("equation", {}).get("expression", "")
-                    if "오늘의 뉴스" in expr or "News" in expr:
-                        header_block_id = block.get("id")
-                        # Check if next block exists
-                        if i + 1 < len(callout_children):
-                            content_block_id = callout_children[i+1].get("id")
-                        break
+                expr = t.get("equation", {}).get("expression", "") if t.get("type") == "equation" else t.get("plain_text", "")
+                if "오늘의 뉴스" in expr or "News" in expr:
+                    header_block_id = block.get("id")
+                    if i + 1 < len(callout_children):
+                        content_block_id = callout_children[i+1].get("id")
+                    break
+        
+        # Case B: Header is a Callout (New style requests)
+        elif block.get("type") == "callout":
+            rich_text = block.get("callout", {}).get("rich_text", [])
+            for t in rich_text:
+                txt = t.get("plain_text", "")
+                if "오늘의 뉴스" in txt or "News" in txt:
+                    header_block_id = block.get("id")
+                    header_is_container = True
+                    print("Found Header as Callout (Container).")
+                    
+                    # Look for content INSIDE this header callout
+                    inner_children = get_children(token, header_block_id)
+                    if inner_children:
+                        # Assume first child is content. Logic can be improved if needed.
+                        content_block_id = inner_children[0].get("id") 
+                    break
+                    
         if header_block_id: break
         
-    return callout_id, header_block_id, content_block_id
+    return callout_id, header_block_id, content_block_id, header_is_container
 
 def main():
     token = os.environ.get("NOTION_TOKEN")
@@ -220,15 +172,16 @@ def main():
     selected_news = random.choice(news_items[:5] if news_items else [])
     
     # Identify Blocks
-    callout_id, header_id, content_id = find_news_blocks(token, page_id)
+    callout_id, header_id, content_id, header_is_container = find_news_blocks(token, page_id)
     
     if not callout_id:
-        # Fallback if callout logic creates issues, but we need callout ID.
-        # Assuming manual ID for safety if search fails? 
-        # For now, if dynamic search fails, we can't proceed easily.
+        print("Could not find main callout.")
         return
 
     # 1. Update/Create Header
+    # Logic: If header is a container (Callout), we DO NOT update its text, we just use it as parent.
+    # If header is paragraph, we update it to ensure styling.
+    
     header_expression = r"\substack{ \color{gray} \textsf{\scriptsize 오늘의 뉴스 📊} }"
     header_payload = {
         "paragraph": {
@@ -239,21 +192,28 @@ def main():
         }
     }
     
+    parent_for_content = callout_id # Default parent for content
+    
     if header_id:
-        update_block_content(token, header_id, header_payload)
+        if not header_is_container:
+            # Update paragraph header
+            update_block_content(token, header_id, header_payload)
+            parent_for_content = callout_id # Sibling
+        else:
+            print("Header is a container. Skipping header text update.")
+            parent_for_content = header_id # Child
     else:
-        # Append Header
+        # Append Header (Paragraph style default)
         print("Header block not found. creating...")
         append_children(token, callout_id, [{
             "object": "block",
             "type": "paragraph",
             "paragraph": header_payload["paragraph"]
         }])
-        # Re-fetch to get the new structure? Or just append content too.
-        # If we append header, we should append content right after.
+        # Note: If we just created it, we don't have its ID to be parent. 
+        # Content will be appended to callout_id as sibling.
         
     # 2. Update/Create Content
-    # Use Rich Text with Link
     content_payload = {
         "paragraph": {
             "rich_text": [{
@@ -268,13 +228,10 @@ def main():
     }
     
     if content_id:
-        # We assume the block after header is the content block.
-        # We overwrite it.
         update_block_content(token, content_id, content_payload)
     else:
-        # If header existed but content didn't, or both didn't exist
-        print("Content block not found. creating...")
-        append_children(token, callout_id, [{
+        print(f"Content block not found. Appending to {parent_for_content}...")
+        append_children(token, parent_for_content, [{
             "object": "block",
             "type": "paragraph",
             "paragraph": content_payload["paragraph"]
