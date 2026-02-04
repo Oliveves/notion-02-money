@@ -120,7 +120,13 @@ def find_news_blocks(token, page_id):
     content_block_id = None
     header_is_container = False # Flag: if True, header is a Callout containing the news
     
+    first_child_callout = None # Fallback: Any child callout
+    
     for i, block in enumerate(callout_children):
+        # Check for child callout (Candidate for container)
+        if block.get("type") == "callout":
+             if first_child_callout is None: first_child_callout = block.get("id")
+        
         # Case A: Header is a Paragraph (Old style)
         if block.get("type") == "paragraph":
             rich_text = block.get("paragraph", {}).get("rich_text", [])
@@ -135,24 +141,43 @@ def find_news_blocks(token, page_id):
         # Case B: Header is a Callout (New style requests)
         elif block.get("type") == "callout":
             rich_text = block.get("callout", {}).get("rich_text", [])
+            # Search text match
+            text_match = False
             for t in rich_text:
                 txt = t.get("plain_text", "")
                 if "오늘의 뉴스" in txt or "News" in txt:
-                    header_block_id = block.get("id")
-                    header_is_container = True
-                    print("Found Header as Callout (Container).")
-                    
-                    # Look for content INSIDE this header callout
-                    inner_children = get_children(token, header_block_id)
-                    if inner_children:
-                        # Find the first paragraph block to update
-                        for child in inner_children:
-                            if child.get("type") == "paragraph":
-                                content_block_id = child.get("id")
-                                break 
+                    text_match = True
                     break
+            
+            if text_match:
+                header_block_id = block.get("id")
+                header_is_container = True
+                print("Found Header as Callout (Container).")
+                
+                # Look for content INSIDE this header callout
+                inner_children = get_children(token, header_block_id)
+                if inner_children:
+                    # Find the first paragraph block to update
+                    for child in inner_children:
+                        if child.get("type") == "paragraph":
+                            content_block_id = child.get("id")
+                            break 
+                break
                     
         if header_block_id: break
+    
+    # Fallback: If no text match found, but there IS a child callout, assume that's the one user wants us to use (The "Gray Callout")
+    if not header_block_id and first_child_callout:
+        print("No header text match, but found a child callout. Using it as container.")
+        header_block_id = first_child_callout
+        header_is_container = True
+        # Try to find content inside it (it might be empty if user cleared it, which is fine)
+        inner_children = get_children(token, header_block_id)
+        if inner_children:
+             for child in inner_children:
+                if child.get("type") == "paragraph":
+                    content_block_id = child.get("id")
+                    break
         
     return callout_id, header_block_id, content_block_id, header_is_container
 
