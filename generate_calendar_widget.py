@@ -147,7 +147,7 @@ def parse_data(results):
                     break
                     
         # Try to find Loss (Explicit Loss column)
-        l_keys = ["판매손실", "Sale Loss", "손실", "Loss", "손실액", "손실금액"]
+        l_keys = ["판매손실", "Sale Loss", "손실", "Loss", "손실액", "손실금액", "매도 손실 금액"]
         for k in l_keys:
             if k in props:
                 l_val = get_number_value(props[k])

@@ -94,19 +94,87 @@ def find_news_blocks(token, page_id):
     callout_id = None
     
     print(f"Debug: Page has {len(page_children)} children.")
-    for block in page_children:
-        b_type = block.get("type")
-        # print(f"Debug: Found block type: {b_type} ({block.get('id')})") # Uncomment if needed
-        if b_type == "callout":
-            callout_id = block.get("id")
-            print(f"Found Callout Block: {callout_id}")
-            break
+    
+    # Recursive search function
+    def find_target_blocks_recursive(blocks, depth=0):
+        if depth > 5: return None, None # Increased depth limit
+        
+        found_callout = None
+        found_header = None
+        
+        for block in blocks:
+            b_type = block.get("type")
+            b_id = block.get("id")
             
+            # Check if this block IS the header ("오늘의 뉴스")
+            # Usually in paragraph or equation
+            content_text = ""
+            if b_type == "paragraph":
+                rich_text = block.get("paragraph", {}).get("rich_text", [])
+                for t in rich_text:
+                    content_text += t.get("plain_text", "") + t.get("equation", {}).get("expression", "")
+            
+            if "오늘의 뉴스" in content_text or "News" in content_text:
+                 print(f"Found Header Block by Text: {b_id}")
+                 found_header = b_id
+                 # If we found header, the parent might be the container we want, 
+                 # OR we just return this header ID to update IT, and the next block for content.
+                 # But we need to return callout_id (container) to append if needed?
+                 # Actually main() uses header_id to update content.
+            
+            if b_type == "callout":
+                found_callout = b_id
+                
+            # If we found both, great, but header is most important for updating existing.
+            if found_header:
+                return found_callout, found_header # Return what we have
+
+            # Check containers (column_list -> column, callout content, toggle)
+            if float(depth) < 5 and block.get("has_children"):
+                children = get_children(token, b_id)
+                c_callout, c_header = find_target_blocks_recursive(children, depth + 1)
+                
+                # If child found something, bubble it up.
+                # Prioritize child's discovery
+                if c_header: 
+                    return (c_callout if c_callout else found_callout), c_header
+                if c_callout and not found_callout:
+                    found_callout = c_callout
+        
+        return found_callout, found_header
+
+    callout_id, header_id = find_target_blocks_recursive(page_children)
+    
+    # Fallback: If no callout found with header but we need one, just take the FIRST callout found on the page.
     if not callout_id:
-        print("Callout not found. Listing all block types found:")
+        print("Specific News Callout not found. Searching for ANY callout...")
         for block in page_children:
-            print(f"- {block.get('type')} ({block.get('id')})")
-        return None, None, None
+            if block.get("type") == "callout":
+                callout_id = block.get("id")
+                print(f"Fallback Callout found: {callout_id}")
+                break
+    
+    # If header found, we can deduce content_id comes after it?
+    # The original logic expected callout -> header -> content.
+    # If we found header but it's deep, we need its sibling.
+    # This is getting complex. 
+    # Simplified strategy: If header_id matches, we need to find its parent to find its next sibling?
+    # Notion API doesn't give parent easily or siblings without re-fetching parent children.
+    # BUT, if we returned the LIST of blocks in recursive search, we could find the index.
+    
+    # Retrying simple approach: Just update the header if found. 
+    # If content needs update, we need content_id.
+    # Let's assume if we found header_id, we can try to append content to its parent? No.
+    
+    # If header is found, let's just use it.
+    # For content, if we can't find it easily, maybe we just append to the SAME container as header?
+    
+    content_id = None # We'll skip finding content_block specific ID for now if we use text search
+    # If we found callout but no header, we return (callout, None, None) which leads to append.
+    # If we found header, we return (None, header, None) -> Update header. 
+    # But where does content go?
+    
+    return callout_id, header_id, None
 
     # 2. Find Header Block ("오늘의 뉴스") inside Callout
     print(f"Searching for News Header in Callout {callout_id}...")

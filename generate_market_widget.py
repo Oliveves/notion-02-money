@@ -1,6 +1,7 @@
 import yfinance as yf
 import os
 import sys
+from datetime import datetime
 
 # Force UTF-8 encoding
 sys.stdout.reconfigure(encoding='utf-8')
@@ -134,14 +135,16 @@ def generate_html(market_data):
         
         items_html += f"""
         <div class="market-item">
-            <span class="name">{item['name']}</span>
+            <div class="name">{item['name']}</div>
             <div class="price-info">
-                <span class="price">{price_fmt}</span>
-                <span class="change {color_class}">{change_fmt}</span>
+                <div class="price {color_class}">{price_fmt}</div>
+                <div class="change {color_class}">{change_fmt}</div>
             </div>
         </div>
         """
         
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+    
     html = f"""
     <!DOCTYPE html>
     <html lang="ko">
@@ -153,6 +156,9 @@ def generate_html(market_data):
     </head>
     <body>
         {items_html}
+        <div style="text-align: right; font-size: 0.7em; color: #ccc; margin-top: 5px;">
+            Updated: {now_str}
+        </div>
     </body>
     </html>
     """
