@@ -112,34 +112,48 @@ def find_news_blocks(token, page_id):
         print("No Callout found in page.")
         return None, None, None, False
 
-    # 2. Find First Nested Callout ("Inner Callout") inside Main Callout
-    print(f"Searching for First Nested Callout in Callout {callout_id}...")
+    # 2. Iterate Children of Main Callout to find Components
+    print(f"Searching for Components in Callout {callout_id}...")
     callout_children = get_children(token, callout_id)
     
     header_block_id = None
+    content_container_id = None
     content_block_id = None
-    header_is_container = False 
     
-    # Strictly find the FIRST callout child
     for block in callout_children:
-        if block.get("type") == "callout":
-            header_block_id = block.get("id")
-            header_is_container = True
-            print(f"Found First Nested Callout: {header_block_id}")
-            break
+        block_type = block.get("type")
+        
+        # A. Search for Header ("Today's News")
+        if not header_block_id and block_type in ["paragraph", "equation", "heading_1", "heading_2", "heading_3"]:
+            # Check text content
+            text_content = ""
+            if block_type == "paragraph":
+                rich_text = block.get("paragraph", {}).get("rich_text", [])
+                for t in rich_text:
+                    if t.get("type") == "equation":
+                        text_content += t.get("equation", {}).get("expression", "")
+                    else:
+                        text_content += t.get("plain_text", "")
             
-    if header_block_id:
-        # Search for content INSIDE this nested callout
-        inner_children = get_children(token, header_block_id)
+            if "오늘의 뉴스" in text_content or "News" in text_content:
+                header_block_id = block.get("id")
+                print(f"Found Header Block: {header_block_id}")
+
+        # B. Search for Content Container (Inner Callout)
+        if not content_container_id and block_type == "callout":
+            content_container_id = block.get("id")
+            print(f"Found Content Container (Inner Callout): {content_container_id}")
+            
+    # 3. If Content Container found, find the content inside it
+    if content_container_id:
+        inner_children = get_children(token, content_container_id)
         if inner_children:
             for child in inner_children:
                 if child.get("type") == "paragraph":
                     content_block_id = child.get("id")
                     break
-    else:
-        print("No Nested Callout found. (Will create one)")
-        
-    return callout_id, header_block_id, content_block_id, header_is_container
+                    
+    return callout_id, header_block_id, content_container_id, content_block_id
 
 def main():
     token = os.environ.get("NOTION_TOKEN")
@@ -161,66 +175,60 @@ def main():
     selected_news = random.choice(news_items[:5] if news_items else [])
     
     # Identify Blocks
-    callout_id, header_id, content_id, header_is_container = find_news_blocks(token, page_id)
+    callout_id, header_id, content_container_id, content_id = find_news_blocks(token, page_id)
     
     if not callout_id:
         print("Could not find main callout.")
         return
 
-    # 1. Update/Create Header
+    # 1. Update/Create Header (Standalone)
     header_expression = r"\substack{ \color{gray} \textsf{\scriptsize 오늘의 뉴스 📊} }"
     
-    parent_for_content = callout_id # Default fallback
-    
     if header_id:
-        # Update Header Text (to fix stale dates/titles)
-        # We need to know the type to send correct payload
-        
-        target_type = "callout" if header_is_container else "paragraph"
-        final_payload = {
-            target_type: {
+        # Update existing header
+        print(f"Updating Header Block {header_id}...")
+        update_block_content(token, header_id, {
+            "paragraph": {
                 "rich_text": [{
                     "type": "equation",
                     "equation": { "expression": header_expression }
                 }]
             }
-        }
-        
-        print(f"Updating Header ({target_type})...")
-        update_block_content(token, header_id, final_payload)
-            
-        parent_for_content = header_id if header_is_container else callout_id
+        })
     else:
-        # Create NEW Header
-        # User requested Nested Callout structure
-        print("Header block not found. Creating new Inner Callout Header...")
-        
-        new_header_payload = {
+        # Create new Header
+        print("Creating New Header Block...")
+        append_children(token, callout_id, [{
             "object": "block",
-            "type": "callout",
-            "callout": {
+            "type": "paragraph",
+            "paragraph": {
                 "rich_text": [{
                     "type": "equation",
                     "equation": { "expression": header_expression }
-                }],
+                }]
+            }
+        }])
+
+    # 2. Update/Create Content Container (Inner Callout)
+    target_container_id = content_container_id
+    
+    if not target_container_id:
+        # Create Inner Callout if missing
+        print("Creating New Inner Callout (Content Container)...")
+        resp = append_children(token, callout_id, [{
+            "object": "block",
+            "type": "callout",
+            "callout": {
+                "rich_text": [], # Empty text for container
                 "icon": { "emoji": "📰" },
                 "color": "gray_background"
             }
-        }
-        
-        # Append nested callout
-        resp = append_children(token, callout_id, [new_header_payload])
-        
+        }])
         if resp and "results" in resp and len(resp["results"]) > 0:
-            new_block = resp["results"][0]
-            new_header_id = new_block.get("id")
-            print(f"Created new header callout: {new_header_id}")
-            parent_for_content = new_header_id 
-        else:
-            print("Failed to create header? Fallback to callout parent.")
-            parent_for_content = callout_id
-
-    # 2. Update/Create Content
+            target_container_id = resp["results"][0].get("id")
+            print(f"Created inner callout: {target_container_id}")
+    
+    # 3. Update/Create News Content
     content_payload = {
         "paragraph": {
             "rich_text": [{
@@ -235,14 +243,17 @@ def main():
     }
     
     if content_id:
+        print(f"Updating Content Block {content_id}...")
         update_block_content(token, content_id, content_payload)
-    else:
-        print(f"Content block not found. Appending to {parent_for_content}...")
-        append_children(token, parent_for_content, [{
+    elif target_container_id:
+        print(f"Appending Content to Container {target_container_id}...")
+        append_children(token, target_container_id, [{
             "object": "block",
             "type": "paragraph",
             "paragraph": content_payload["paragraph"]
         }])
+    else:
+        print("Failed to find or create a target container for content.")
 
 if __name__ == "__main__":
     main()
