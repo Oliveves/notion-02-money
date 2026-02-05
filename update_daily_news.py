@@ -227,27 +227,19 @@ def main():
             }
         }])
 
-    # 2. Update/Create Content Container (Inner Callout)
-    target_container_id = content_container_id
+    # 2. News Content Update (Strategy: Delete Container & Recreate)
+    # This ensures no duplication ever occurs by resetting the container.
     
-    if not target_container_id:
-        # Create Inner Callout if missing
-        print("Creating New Inner Callout (Content Container)...")
-        resp = append_children(token, callout_id, [{
-            "object": "block",
-            "type": "callout",
-            "callout": {
-                "rich_text": [], # Empty text for container
-                "icon": { "emoji": "📰" },
-                "color": "gray_background"
-            }
-        }])
-        if resp and "results" in resp and len(resp["results"]) > 0:
-            target_container_id = resp["results"][0].get("id")
-            print(f"Created inner callout: {target_container_id}")
+    if content_container_id:
+        print(f"Deleting existing content container {content_container_id} to ensure clean state...")
+        delete_block(token, content_container_id)
+        
+    print("Creating New Inner Callout with Content...")
     
-    # 3. Update/Create News Content
-    content_payload = {
+    # Prepare Content
+    content_block = {
+        "object": "block",
+        "type": "paragraph",
         "paragraph": {
             "rich_text": [{
                 "type": "text",
@@ -260,31 +252,19 @@ def main():
         }
     }
     
-    if target_container_id:
-        # Fetch current children to check for duplicates/cleanup
-        print(f"Checking children of content container {target_container_id}...")
-        container_children = get_children(token, target_container_id)
-        
-        if container_children is None:
-            # API Error occurred
-            print("Failed to fetch children. Aborting content update to prevent safe-mode duplication.")
-            return
-
-        if container_children:
-            print(f"Found {len(container_children)} existing blocks. Wiping all...")
-            for block in container_children:
-                delete_block(token, block.get("id"))
-                
-        # Append new content
-        print(f"Appending new content to {target_container_id}...")
-        append_children(token, target_container_id, [{
-            "object": "block",
-            "type": "paragraph",
-            "paragraph": content_payload["paragraph"]
-        }])
-
-    else:
-        print("Failed to find or create a target container for content.")
+    # Create Container with Content inside
+    new_container_payload = {
+        "object": "block",
+        "type": "callout",
+        "callout": {
+            "rich_text": [], 
+            "icon": { "emoji": "📰" },
+            "color": "gray_background",
+            "children": [content_block]
+        }
+    }
+    
+    append_children(token, callout_id, [new_container_payload])
 
 if __name__ == "__main__":
     main()
