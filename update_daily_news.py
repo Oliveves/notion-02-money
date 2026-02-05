@@ -48,6 +48,7 @@ def get_children(token, block_id):
                 return data.get("results", [])
     except Exception as e:
         print(f"Error fetching children: {e}")
+        return None  # Return None to indicate failure
     return []
 
 def update_block_content(token, block_id, payload):
@@ -264,25 +265,24 @@ def main():
         print(f"Checking children of content container {target_container_id}...")
         container_children = get_children(token, target_container_id)
         
+        if container_children is None:
+            # API Error occurred
+            print("Failed to fetch children. Aborting content update to prevent safe-mode duplication.")
+            return
+
         if container_children:
-            # Update the first child
-            first_child_id = container_children[0].get("id")
-            print(f"Updating existing content block {first_child_id}...")
-            update_block_content(token, first_child_id, content_payload)
-            
-            # Delete any subsequent children (garbage collection)
-            if len(container_children) > 1:
-                print(f"Found {len(container_children) - 1} extra blocks. Cleaning up...")
-                for extra_block in container_children[1:]:
-                    delete_block(token, extra_block.get("id"))
-        else:
-             # Container empty, append new
-            print(f"Container empty. Appending content to {target_container_id}...")
-            append_children(token, target_container_id, [{
-                "object": "block",
-                "type": "paragraph",
-                "paragraph": content_payload["paragraph"]
-            }])
+            print(f"Found {len(container_children)} existing blocks. Wiping all...")
+            for block in container_children:
+                delete_block(token, block.get("id"))
+                
+        # Append new content
+        print(f"Appending new content to {target_container_id}...")
+        append_children(token, target_container_id, [{
+            "object": "block",
+            "type": "paragraph",
+            "paragraph": content_payload["paragraph"]
+        }])
+
     else:
         print("Failed to find or create a target container for content.")
 
