@@ -162,16 +162,21 @@ def find_news_blocks(token, page_id):
             content_container_id = block.get("id")
             print(f"Found Content Container (Inner Callout): {content_container_id}")
             
-    # 3. If Content Container found, find the content inside it
+    # 3. If Content Containers found, identify them
+    # Changed: Return ALL found containers to allow cleanup in main()
+    found_containers = []
+    
     if content_container_id:
-        inner_children = get_children(token, content_container_id)
-        if inner_children:
-            for child in inner_children:
-                if child.get("type") == "paragraph":
-                    content_block_id = child.get("id")
-                    break
-                    
-    return callout_id, header_block_id, content_container_id, content_block_id
+        # We found the first one in the loop above
+        found_containers.append(content_container_id)
+        
+    # Check if there are MORE containers (duplicates)
+    if callout_children:
+        for block in callout_children:
+            if block.get("type") == "callout" and block.get("id") != content_container_id:
+                 found_containers.append(block.get("id"))
+                     
+    return callout_id, header_block_id, found_containers, content_block_id
 
 def main():
     token = os.environ.get("NOTION_TOKEN")
@@ -193,7 +198,8 @@ def main():
     selected_news = random.choice(news_items[:5] if news_items else [])
     
     # Identify Blocks
-    callout_id, header_id, content_container_id, content_id = find_news_blocks(token, page_id)
+    callout_id, header_id, found_containers, _ = find_news_blocks(token, page_id)
+    # Note: find_news_blocks no longer returns content_id, we derive it from containers
     
     if not callout_id:
         print("Could not find main callout.")
@@ -227,19 +233,50 @@ def main():
             }
         }])
 
-    # 2. News Content Update (Strategy: Delete Container & Recreate)
-    # This ensures no duplication ever occurs by resetting the container.
+    # 2. Handle Content Containers (Inner Callout)
+    target_container_id = None
     
-    if content_container_id:
-        print(f"Deleting existing content container {content_container_id} to ensure clean state...")
-        delete_block(token, content_container_id)
+    if found_containers:
+        # Strategy: Keep the first one, delete the rest
+        target_container_id = found_containers[0]
+        print(f"Using existing inner callout: {target_container_id}")
         
-    print("Creating New Inner Callout with Content...")
-    
-    # Prepare Content
-    content_block = {
-        "object": "block",
-        "type": "paragraph",
+        if len(found_containers) > 1:
+            print(f"Found {len(found_containers)-1} duplicates. cleaning up...")
+            for extra_id in found_containers[1:]:
+                delete_block(token, extra_id)
+                
+        # REMOVE ICON (Update property)
+        # Note: Notion API might not support setting icon to null for callouts directly if it forces default. 
+        # We try setting it to null (None in python json dump).
+        print("Removing icon from inner callout...")
+        update_block_content(token, target_container_id, {
+            "callout": {
+                "icon": None 
+            }
+        })
+                
+    else:
+        # Create NEW Container (No Icon)
+        print("Creating New Inner Callout (No Icon)...")
+        # To have no icon, we might omit it or set it to null? 
+        # Notion usually defaults to an icon if omitted. 
+        # Let's try explicit null. If that fails, we fallback to specific handling.
+        resp = append_children(token, callout_id, [{
+            "object": "block",
+            "type": "callout",
+            "callout": {
+                "rich_text": [], 
+                "icon": None, # Attempt to set no icon
+                "color": "gray_background"
+            }
+        }])
+        if resp and "results" in resp and len(resp["results"]) > 0:
+            target_container_id = resp["results"][0].get("id")
+            print(f"Created inner callout: {target_container_id}")
+
+    # 3. Update Content (Text-Only Strategy)
+    content_payload = {
         "paragraph": {
             "rich_text": [{
                 "type": "text",
@@ -252,19 +289,33 @@ def main():
         }
     }
     
-    # Create Container with Content inside
-    new_container_payload = {
-        "object": "block",
-        "type": "callout",
-        "callout": {
-            "rich_text": [], 
-            "icon": { "emoji": "📰" },
-            "color": "gray_background",
-            "children": [content_block]
-        }
-    }
-    
-    append_children(token, callout_id, [new_container_payload])
+    if target_container_id:
+        print(f"Checking content in {target_container_id}...")
+        children = get_children(token, target_container_id)
+        
+        if children is None:
+            print("API Error fetching children. Aborting.")
+            return
+            
+        if children:
+            # Update First Child
+            first_child_id = children[0].get("id")
+            print(f"Updating text in {first_child_id}...")
+            update_block_content(token, first_child_id, content_payload)
+            
+            # Delete Tail (Cleanup)
+            if len(children) > 1:
+                print("Cleaning up extra content blocks...")
+                for extra in children[1:]:
+                    delete_block(token, extra.get("id"))
+        else:
+            # Empty container, append
+            print("Appending new content block...")
+            append_children(token, target_container_id, [{
+                "object": "block",
+                "type": "paragraph",
+                "paragraph": content_payload["paragraph"]
+            }])
 
 if __name__ == "__main__":
     main()
