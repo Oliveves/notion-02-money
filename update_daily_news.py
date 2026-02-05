@@ -88,6 +88,23 @@ def append_children(token, parent_id, children_list):
         print(f"Error appending children: {e}")
     return None
 
+def delete_block(token, block_id):
+    url = f"https://api.notion.com/v1/blocks/{block_id}"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json"
+    }
+    req = urllib.request.Request(url, headers=headers, method="DELETE")
+    try:
+        with urllib.request.urlopen(req) as response:
+            if response.status == 200:
+                print(f"Block {block_id} deleted.")
+                return True
+    except Exception as e:
+        print(f"Error deleting block {block_id}: {e}")
+    return False
+
 def find_news_blocks(token, page_id):
     # 1. Find Callout
     print(f"Searching for Callout in Page {page_id}...")
@@ -242,16 +259,30 @@ def main():
         }
     }
     
-    if content_id:
-        print(f"Updating Content Block {content_id}...")
-        update_block_content(token, content_id, content_payload)
-    elif target_container_id:
-        print(f"Appending Content to Container {target_container_id}...")
-        append_children(token, target_container_id, [{
-            "object": "block",
-            "type": "paragraph",
-            "paragraph": content_payload["paragraph"]
-        }])
+    if target_container_id:
+        # Fetch current children to check for duplicates/cleanup
+        print(f"Checking children of content container {target_container_id}...")
+        container_children = get_children(token, target_container_id)
+        
+        if container_children:
+            # Update the first child
+            first_child_id = container_children[0].get("id")
+            print(f"Updating existing content block {first_child_id}...")
+            update_block_content(token, first_child_id, content_payload)
+            
+            # Delete any subsequent children (garbage collection)
+            if len(container_children) > 1:
+                print(f"Found {len(container_children) - 1} extra blocks. Cleaning up...")
+                for extra_block in container_children[1:]:
+                    delete_block(token, extra_block.get("id"))
+        else:
+             # Container empty, append new
+            print(f"Container empty. Appending content to {target_container_id}...")
+            append_children(token, target_container_id, [{
+                "object": "block",
+                "type": "paragraph",
+                "paragraph": content_payload["paragraph"]
+            }])
     else:
         print("Failed to find or create a target container for content.")
 
