@@ -12,23 +12,57 @@ import xml.etree.ElementTree as ET
 sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8')
 
+import urllib.parse
+
 def fetch_economic_news():
-    # Google News RSS (Economy - Korea)
-    rss_url = "https://news.google.com/rss/search?q=%EA%B2%BD%EC%A0%9C&hl=ko&gl=KR&ceid=KR:ko"
+    # Keywords: Samsung, SK Hynix, Kospi, Nasdaq, Fed (Interest Rate), Exchange Rate
+    keywords = ["삼성전자", "SK하이닉스", "코스피", "나스닥", "금리", "환율", "뉴욕증시"]
+    query = " OR ".join(keywords)
+    encoded_query = urllib.parse.quote(query)
+    
+    # Google News RSS with the specific query
+    rss_url = f"https://news.google.com/rss/search?q={encoded_query}&hl=ko&gl=KR&ceid=KR:ko"
+    
     try:
         req = urllib.request.Request(rss_url)
         with urllib.request.urlopen(req) as response:
             if response.status == 200:
                 xml_data = response.read()
                 root = ET.fromstring(xml_data)
-                items = []
+                
+                all_items = []
                 for item in root.findall('.//item'):
                     title = item.find('title').text
                     link = item.find('link').text
+                    
+                    # Clean Title
                     if " - " in title:
                         title = title.rsplit(" - ", 1)[0]
-                    items.append({"title": title, "link": link})
-                return items
+                    
+                    all_items.append({"title": title, "link": link})
+                
+                # --- Filtering Logic ---
+                filtered_items = []
+                exclusion_keywords = ["[광고]", "게시판", "인사", "부고", "화촉", "모집", "단신"]
+                
+                for item in all_items:
+                    # 1. Exclude irrelevant
+                    if any(bad in item['title'] for bad in exclusion_keywords):
+                        continue
+                        
+                    # 2. Assign Priority (1 = High, 2 = Medium)
+                    # High Priority: Directly mentions major keywords in TITLE
+                    priority = 2
+                    if any(k in item['title'] for k in keywords):
+                        priority = 1
+                    
+                    item['priority'] = priority
+                    filtered_items.append(item)
+                
+                # Sort by Priority (1 first)
+                filtered_items.sort(key=lambda x: x['priority'])
+                
+                return filtered_items
     except Exception as e:
         print(f"Error fetching RSS: {e}")
         return []
